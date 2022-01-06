@@ -50,8 +50,8 @@ func NewFGBReader(b []byte) (*FGBReader, error) {
 		indexLength = calcTreeSize(header.FeaturesCount(), header.IndexNodeSize())
 	}
 
-	res.indexOffset = 8 + 4 + headerLength
-	res.featuresOffset = flatbuffers.UOffsetT(8 + 4 + headerLength + indexLength)
+	res.indexOffset = 8 + flatbuffers.SizeUint32 + headerLength
+	res.featuresOffset = flatbuffers.UOffsetT(8 + flatbuffers.SizeUint32 + headerLength + indexLength)
 
 	// TODO: should we validate the size?
 	//featureLen := binary.LittleEndian.Uint32(b[res.featuresOffset : res.featuresOffset+4])
@@ -77,6 +77,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println("total size: ", len(b))
 
 	fgb, err := NewFGBReader(b)
 
@@ -97,15 +98,23 @@ func main() {
 	}
 	fmt.Println("index", header.IndexNodeSize())
 
-	// READ features
-	features := fgb.Feature()
-	fmt.Println("col len", features.ColumnsLength())
-	fmt.Println("prop len", features.PropertiesLength())
-	fmt.Println("prop bytes", string(features.PropertiesBytes()))
+	// READ feature
+	feature := fgb.Feature()
+	fmt.Println("col len", feature.ColumnsLength())
+	fmt.Println("prop len", feature.PropertiesLength())
+	fmt.Println("prop bytes", string(feature.PropertiesBytes()))
 
 	// READ geometry
 	var g FlatGeobuf.Geometry
-	features.Geometry(&g)
-	fmt.Println(g.Type())
-	fmt.Println(g.PartsLength())
+	feature.Geometry(&g)
+	fmt.Println(g.Type(), g.PartsLength(), ":")
+	for i := 0; i < g.PartsLength(); i++ {
+		var gp FlatGeobuf.Geometry
+		g.Parts(&gp, i)
+		fmt.Println("  ", i, gp.Type(), gp.XyLength())
+		for j := 0; j < gp.XyLength(); j += 2 {
+			fmt.Printf(" %f,%f ", gp.Xy(j), gp.Xy(j+1))
+		}
+		fmt.Println()
+	}
 }
