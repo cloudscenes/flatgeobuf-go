@@ -63,8 +63,48 @@ func (fgb *FGBReader) Header() *FlatGeobuf.Header {
 	return FlatGeobuf.GetSizePrefixedRootAsHeader(fgb.b, 8)
 }
 
-func (fgb *FGBReader) Feature() *FlatGeobuf.Feature {
-	return FlatGeobuf.GetSizePrefixedRootAsFeature(fgb.b, fgb.featuresOffset)
+func (fgb *FGBReader) Features() *Features {
+	return NewFeatures(fgb.b[fgb.featuresOffset:])
+}
+
+type Features struct {
+	b       []byte
+	pos     uint32
+	started bool // TODO: this should not be needed
+}
+
+func NewFeatures(b []byte) *Features {
+	return &Features{
+		b:       b,
+		pos:     0,
+		started: false,
+	}
+}
+
+func (fs *Features) featureLen() uint32 {
+	return binary.LittleEndian.Uint32(fs.b[fs.pos : fs.pos+4])
+}
+
+func (fs *Features) Next() bool {
+	if !fs.started {
+		fs.started = true
+		fs.pos = 0
+		return true
+	}
+
+	if int(fs.pos+4) >= len(fs.b) {
+		return false
+	}
+
+	fs.pos += fs.featureLen() + flatbuffers.SizeUint32
+	if int(fs.pos) >= len(fs.b) {
+		return false
+	}
+	return true
+}
+
+func (fs *Features) Read() *FlatGeobuf.Feature {
+	return FlatGeobuf.GetSizePrefixedRootAsFeature(fs.b, flatbuffers.UOffsetT(fs.pos))
 }
 
 func main() {
@@ -98,23 +138,27 @@ func main() {
 	}
 	fmt.Println("index", header.IndexNodeSize())
 
-	// READ feature
-	feature := fgb.Feature()
-	fmt.Println("col len", feature.ColumnsLength())
-	fmt.Println("prop len", feature.PropertiesLength())
-	fmt.Println("prop bytes", string(feature.PropertiesBytes()))
+	// READ features
+	features := fgb.Features()
 
-	// READ geometry
-	var g FlatGeobuf.Geometry
-	feature.Geometry(&g)
-	fmt.Println(g.Type(), g.PartsLength(), ":")
-	for i := 0; i < g.PartsLength(); i++ {
-		var gp FlatGeobuf.Geometry
-		g.Parts(&gp, i)
-		fmt.Println("  ", i, gp.Type(), gp.XyLength())
-		for j := 0; j < gp.XyLength(); j += 2 {
-			fmt.Printf(" %f,%f ", gp.Xy(j), gp.Xy(j+1))
+	for features.Next() {
+		feature := features.Read()
+		fmt.Println("col len", feature.ColumnsLength())
+		fmt.Println("prop len", feature.PropertiesLength())
+		fmt.Println("prop bytes", string(feature.PropertiesBytes()))
+
+		// READ geometry
+		var g FlatGeobuf.Geometry
+		feature.Geometry(&g)
+		fmt.Println(g.Type(), g.PartsLength(), ":")
+		for i := 0; i < g.PartsLength(); i++ {
+			var gp FlatGeobuf.Geometry
+			g.Parts(&gp, i)
+			fmt.Println("  ", i, gp.Type(), gp.XyLength())
+			for j := 0; j < gp.XyLength(); j += 2 {
+				fmt.Printf(" %f,%f ", gp.Xy(j), gp.Xy(j+1))
+			}
+			fmt.Println()
 		}
-		fmt.Println()
 	}
 }
