@@ -42,7 +42,7 @@ func NewFGBReader(b []byte) (*FGBReader, error) {
 
 	res := FGBReader{b: b}
 
-	headerLength := binary.LittleEndian.Uint32(b[8:12])
+	headerLength := flatbuffers.GetUint32(b[8:12])
 	var indexLength uint32
 
 	header := FlatGeobuf.GetSizePrefixedRootAsHeader(b, 8)
