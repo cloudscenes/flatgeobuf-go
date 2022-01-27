@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"encoding/binary"
+	"errors"
 	"flatgeobuf-go/FlatGeobuf"
 	"fmt"
 	flatbuffers "github.com/google/flatbuffers/go"
@@ -12,6 +14,31 @@ import (
 )
 
 const NODE_ITEM_LEN = 8*4 + 8
+const SupportedVersion uint8 = 3
+
+// last byte is the patch level that is backwards compatible,
+// so an implementation for a major version should accept any patch level version
+var MagicBytes = []byte{0x66, 0x67, 0x62, SupportedVersion, 0x66, 0x67, 0x62, 0x00}
+
+var (
+	ErrUnsupportedVersion = errors.New("unsupported flatgeobuffer version")
+	ErrInvalidFile        = errors.New("invalid flatgeobuffer file")
+)
+
+func Version(magicBytes []byte) (string, error) {
+	if !bytes.Equal(magicBytes[0:3], MagicBytes[0:3]) || !bytes.Equal(magicBytes[4:7], MagicBytes[4:7]) {
+		return "", ErrInvalidFile
+	}
+
+	var majorVersion = magicBytes[3]
+	var patchVersion = magicBytes[7]
+
+	if majorVersion != SupportedVersion {
+		return "", ErrUnsupportedVersion
+	}
+
+	return fmt.Sprintf("%d.0.%d", majorVersion, patchVersion), nil
+}
 
 // adapted from the ts version
 // TODO: rewrite
@@ -39,6 +66,13 @@ type FGBReader struct {
 func NewFGBReader(b []byte) (*FGBReader, error) {
 	fmt.Printf("magic bytes %x\n", b[:8])
 	//TODO: check magic bytes
+	version, err := Version(b[:8])
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(version)
 
 	res := FGBReader{b: b}
 
