@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"flatgeobuf-go"
 	"flatgeobuf-go/FlatGeobuf"
 	"fmt"
 	flatbuffers "github.com/google/flatbuffers/go"
@@ -129,15 +130,11 @@ func main() {
 	fmt.Println("desc", header.Description())
 	fmt.Println("feat count", header.FeaturesCount())
 
-	colLen := header.ColumnsLength()
-	fmt.Println("col len", colLen)
-	for i := 0; i < colLen; i++ {
-		var c FlatGeobuf.Column
-		header.Columns(&c, i)
-		fmt.Println("  col ", i, string(c.Name()), c.Description(), c.Type())
-	}
+	columns := flatgeobuf_go.NewColumns(header)
+	fmt.Println(columns)
 	fmt.Println("index", header.IndexNodeSize())
 
+	propertyDecoder := flatgeobuf_go.NewPropertyDecoder(columns)
 	// READ features
 	features := fgb.Features()
 
@@ -145,7 +142,8 @@ func main() {
 		feature := features.Read()
 		fmt.Println("col len", feature.ColumnsLength())
 		fmt.Println("prop len", feature.PropertiesLength())
-		fmt.Println("prop bytes", string(feature.PropertiesBytes()))
+
+		propertyDecoder.Decode(feature.PropertiesBytes())
 
 		// READ geometry
 		var g FlatGeobuf.Geometry
