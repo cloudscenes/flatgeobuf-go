@@ -6,10 +6,6 @@ import (
 	"github.com/google/flatbuffers/go"
 )
 
-func (fgb *FGBReader) Features() *Features {
-	return NewFeatures(fgb.b[fgb.featuresOffset:])
-}
-
 type Features struct {
 	b       []byte
 	pos     uint32

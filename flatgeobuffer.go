@@ -92,3 +92,7 @@ func NewFGBReader(b []byte) (*FGBReader, error) {
 func (fgb *FGBReader) Header() *FlatGeobuf.Header {
 	return FlatGeobuf.GetSizePrefixedRootAsHeader(fgb.b, 8)
 }
+
+func (fgb *FGBReader) Features() *Features {
+	return NewFeatures(fgb.b[fgb.featuresOffset:])
+}
