@@ -123,9 +123,11 @@ func main() {
 	fgb, err := NewFGBReader(b)
 
 	header := fgb.Header()
-	crs := FlatGeobuf.Crs{}
-	header.Crs(&crs)
-	fmt.Println("crs", string(crs.Name()), string(crs.Wkt()))
+	crs := header.Crs(nil)
+
+	if crs != nil {
+		fmt.Println("crs", string(crs.Name()), string(crs.Wkt()))
+	}
 	fmt.Println("name", string(header.Name()))
 	fmt.Println("desc", header.Description())
 	fmt.Println("feat count", header.FeaturesCount())
@@ -143,11 +145,14 @@ func main() {
 		fmt.Println("col len", feature.ColumnsLength())
 		fmt.Println("prop len", feature.PropertiesLength())
 
+		// TODO see proplength
 		propertyDecoder.Decode(feature.PropertiesBytes())
 
 		// READ geometry
-		var g FlatGeobuf.Geometry
-		feature.Geometry(&g)
+		g := feature.Geometry(nil)
+		if g == nil {
+			continue
+		}
 		fmt.Println(g.Type(), g.PartsLength(), ":")
 		for i := 0; i < g.PartsLength(); i++ {
 			var gp FlatGeobuf.Geometry
