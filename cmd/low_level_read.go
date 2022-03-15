@@ -109,7 +109,7 @@ func (fs *Features) Read() *FlatGeobuf.Feature {
 }
 
 func main() {
-	f, err := os.Open("test/data/countries.fgb")
+	f, err := os.Open("test/data/alldatatypes.fgb")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -146,7 +146,8 @@ func main() {
 		fmt.Println("prop len", feature.PropertiesLength())
 
 		// TODO see proplength
-		propertyDecoder.Decode(feature.PropertiesBytes())
+		res := propertyDecoder.Decode(feature.PropertiesBytes())
+		fmt.Println(res)
 
 		// READ geometry
 		g := feature.Geometry(nil)
