@@ -2,7 +2,6 @@ package main
 
 import (
 	"flatgeobuf-go"
-	"flatgeobuf-go"
 	"flatgeobuf-go/FlatGeobuf"
 	"fmt"
 	"io"
