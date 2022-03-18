@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+// PropertyDecoder allows decoding of flatgeobuf properties
+// according to the columns in the header
 type PropertyDecoder struct {
 	c *Columns
 }
@@ -84,6 +86,7 @@ func (pd *PropertyDecoder) decodeVal(b []byte, v *FlatGeobuf.Column) (interface{
 		datetimeSize := flatbuffers.GetUint32(b)
 		t, err := time.Parse(time.RFC3339, string(b[4:4+datetimeSize]))
 		if err != nil {
+			// TODO: should we panic here?
 			fmt.Println(err)
 		} else {
 			val = t
