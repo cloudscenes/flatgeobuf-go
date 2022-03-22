@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	f, err := os.Open("test/data/countries.fgb")
+	f, err := os.Open("test/data/alldatatypes.fgb")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,22 +24,20 @@ func main() {
 	fgb, err := flatgeobuf_go.NewFGBReader(b)
 
 	header := fgb.Header()
-	crs := FlatGeobuf.Crs{}
-	header.Crs(&crs)
-	fmt.Println("crs", string(crs.Name()), string(crs.Wkt()))
+	crs := header.Crs(nil)
+
+	if crs != nil {
+		fmt.Println("crs", string(crs.Name()), string(crs.Wkt()))
+	}
 	fmt.Println("name", string(header.Name()))
 	fmt.Println("desc", header.Description())
 	fmt.Println("feat count", header.FeaturesCount())
 
-	colLen := header.ColumnsLength()
-	fmt.Println("col len", colLen)
-	for i := 0; i < colLen; i++ {
-		var c FlatGeobuf.Column
-		header.Columns(&c, i)
-		fmt.Println("  col ", i, string(c.Name()), c.Description(), c.Type())
-	}
+	columns := flatgeobuf_go.NewColumns(header)
+	fmt.Println(columns)
 	fmt.Println("index", header.IndexNodeSize())
 
+	propertyDecoder := flatgeobuf_go.NewPropertyDecoder(columns)
 	// READ features
 	features := fgb.Features()
 
@@ -47,11 +45,16 @@ func main() {
 		feature := features.Read()
 		fmt.Println("col len", feature.ColumnsLength())
 		fmt.Println("prop len", feature.PropertiesLength())
-		fmt.Println("prop bytes", string(feature.PropertiesBytes()))
+
+		// TODO see proplength
+		res := propertyDecoder.Decode(feature.PropertiesBytes())
+		fmt.Println(res)
 
 		// READ geometry
-		var g FlatGeobuf.Geometry
-		feature.Geometry(&g)
+		g := feature.Geometry(nil)
+		if g == nil {
+			continue
+		}
 		fmt.Println(g.Type(), g.PartsLength(), ":")
 		for i := 0; i < g.PartsLength(); i++ {
 			var gp FlatGeobuf.Geometry

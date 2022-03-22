@@ -45,7 +45,7 @@ func calcTreeSize(numItems uint64, nodeSize uint16) uint32 {
 
 	n := float64(numItems)
 	numNodes := n
-	for n != 1 {
+	for ok := true; ok; ok = n != 1 {
 		n = math.Ceil(float64(n) / float64(nodeSize))
 		numNodes += n
 	}
