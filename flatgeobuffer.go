@@ -60,15 +60,11 @@ type FGBReader struct {
 }
 
 func NewFGBReader(b []byte) (*FGBReader, error) {
-	fmt.Printf("magic bytes %x\n", b[:8])
-
-	version, err := Version(b[:8])
+	_, err := Version(b[:8])
 
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println(version)
 
 	res := FGBReader{b: b}
 
