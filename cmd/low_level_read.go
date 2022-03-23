@@ -2,8 +2,8 @@ package main
 
 import (
 	"flatgeobuf-go"
-	"flatgeobuf-go/FlatGeobuf"
 	"fmt"
+	"github.com/twpayne/go-geom/encoding/geojson"
 	"io"
 	"log"
 	"os"
@@ -51,19 +51,14 @@ func main() {
 		fmt.Println(res)
 
 		// READ geometry
-		g := feature.Geometry(nil)
-		if g == nil {
+		geom, _ := flatgeobuf_go.ParseGeometry(header, feature.Geometry(nil))
+
+		if geom == nil {
 			continue
 		}
-		fmt.Println(g.Type(), g.PartsLength(), ":")
-		for i := 0; i < g.PartsLength(); i++ {
-			var gp FlatGeobuf.Geometry
-			g.Parts(&gp, i)
-			fmt.Println("  ", i, gp.Type(), gp.XyLength())
-			for j := 0; j < gp.XyLength(); j += 2 {
-				fmt.Printf(" %f,%f ", gp.Xy(j), gp.Xy(j+1))
-			}
-			fmt.Println()
-		}
+
+		repr, _ := geojson.Marshal(geom)
+
+		fmt.Printf("%s", repr)
 	}
 }
