@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	f, err := os.Open("test/data/alldatatypes.fgb")
+	f, err := os.Open("test/data/all_geom_types_zm.fgb")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -42,6 +42,8 @@ func main() {
 	features := fgb.Features()
 
 	for features.Next() {
+		fmt.Println("\n############## NEW FEATURE ######################\n")
+
 		feature := features.Read()
 		fmt.Println("col len", feature.ColumnsLength())
 		fmt.Println("prop len", feature.PropertiesLength())
@@ -59,6 +61,9 @@ func main() {
 
 		repr, _ := geojson.Marshal(geom)
 
-		fmt.Printf("%s", repr)
+		fmt.Printf("%s\n", repr)
+
+		fmt.Println("\n####################################\n")
+
 	}
 }
