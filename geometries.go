@@ -31,13 +31,12 @@ func ParseGeometry(header *FlatGeobuf.Header, geometry *FlatGeobuf.Geometry) (ge
 
 	coords := make([]float64, 0, geometry.XyLength()/2*layout.Stride())
 
-	for i := 0; i < geometry.XyLength(); i += 2 {
-		coords = append(coords, geometry.Xy(i), geometry.Xy(i+1))
+	for i := 0; i < geometry.XyLength()/2; i += 1 {
+		coords = append(coords, geometry.Xy(i*2), geometry.Xy(i*2+1))
 
 		if header.HasZ() {
 			coords = append(coords, geometry.Z(i))
 		}
-
 		if header.HasM() {
 			coords = append(coords, geometry.M(i))
 		}
