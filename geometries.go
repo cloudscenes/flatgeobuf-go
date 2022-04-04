@@ -25,14 +25,11 @@ func ParseGeometry(header *FlatGeobuf.Header, geometry *FlatGeobuf.Geometry) (ge
 	var err error
 	if geometry.PartsLength() > 0 {
 		newGeom, err = parseMultiGeometry(geometry, layout, geomType)
-		if err != nil {
-			return nil, err
-		}
 	} else {
 		newGeom, err = parseSimpleGeometry(geometry, layout, geomType)
-		if err != nil {
-			return nil, err
-		}
+	}
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse geometry: %w", err)
 	}
 
 	crs := header.Crs(nil)
@@ -103,7 +100,7 @@ func parseMultiGeometry(geometry *FlatGeobuf.Geometry, layout geom.Layout, geomT
 
 			err = multiPolygon.Push(polygon)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("cannot push polygon to collection: %w", err)
 			}
 		}
 
@@ -122,7 +119,7 @@ func parseMultiGeometry(geometry *FlatGeobuf.Geometry, layout geom.Layout, geomT
 
 			err = geomCollection.Push(createdGeom)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("cannot push geometry to collection: %w", err)
 			}
 		}
 
