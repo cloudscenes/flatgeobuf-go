@@ -80,52 +80,55 @@ func parseSimpleGeometry(geometry *FlatGeobuf.Geometry, layout geom.Layout, geom
 
 func parseMultiGeometry(geometry *FlatGeobuf.Geometry, layout geom.Layout, geomType FlatGeobuf.GeometryType) (geom.T, error) {
 	var newGeom geom.T
+	var addToCollection func(createdGeom geom.T) error
+
 	switch geomType {
 	case FlatGeobuf.GeometryTypeMultiPolygon:
 		multiPolygon := geom.NewMultiPolygon(layout)
-
-		for i := 0; i < geometry.PartsLength(); i++ {
-			partGeom := FlatGeobuf.Geometry{}
-			geometry.Parts(&partGeom, i)
-
-			createdGeom, err := parseSimpleGeometry(&partGeom, layout, partGeom.Type())
-			if err != nil {
-				return nil, err
-			}
-
+		addToCollection = func(createdGeom geom.T) error {
 			polygon, ok := createdGeom.(*geom.Polygon)
 			if !ok {
-				return nil, fmt.Errorf("multipolygon cannot have geoms that are not polygons")
+				return fmt.Errorf("multipolygon cannot have geoms that are not polygons")
 			}
 
-			err = multiPolygon.Push(polygon)
+			err := multiPolygon.Push(polygon)
 			if err != nil {
-				return nil, fmt.Errorf("cannot push polygon to collection: %w", err)
+				return fmt.Errorf("cannot push polygon to collection: %w", err)
 			}
+
+			return nil
 		}
 
 		newGeom = multiPolygon
 	case FlatGeobuf.GeometryTypeGeometryCollection:
 		geomCollection := geom.NewGeometryCollection()
-
-		for i := 0; i < geometry.PartsLength(); i++ {
-			partGeom := FlatGeobuf.Geometry{}
-			geometry.Parts(&partGeom, i)
-
-			createdGeom, err := parseSimpleGeometry(&partGeom, layout, partGeom.Type())
+		addToCollection = func(createdGeom geom.T) error {
+			err := geomCollection.Push(createdGeom)
 			if err != nil {
-				return nil, err
+				return fmt.Errorf("cannot push geometry to collection: %w", err)
 			}
 
-			err = geomCollection.Push(createdGeom)
-			if err != nil {
-				return nil, fmt.Errorf("cannot push geometry to collection: %w", err)
-			}
+			return nil
 		}
 
 		newGeom = geomCollection
 	default:
 		return nil, fmt.Errorf("unsupported geometry type %s", geomType)
+	}
+
+	for i := 0; i < geometry.PartsLength(); i++ {
+		partGeom := FlatGeobuf.Geometry{}
+		geometry.Parts(&partGeom, i)
+
+		createdGeom, err := parseSimpleGeometry(&partGeom, layout, partGeom.Type())
+		if err != nil {
+			return nil, err
+		}
+
+		err = addToCollection(createdGeom)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return newGeom, nil
