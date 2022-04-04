@@ -2,15 +2,15 @@ package main
 
 import (
 	"flatgeobuf-go"
-	"flatgeobuf-go/FlatGeobuf"
 	"fmt"
+	"github.com/twpayne/go-geom/encoding/geojson"
 	"io"
 	"log"
 	"os"
 )
 
 func main() {
-	f, err := os.Open("test/data/alldatatypes.fgb")
+	f, err := os.Open("test/data/all_geom_types_zm.fgb")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -42,6 +42,8 @@ func main() {
 	features := fgb.Features()
 
 	for features.Next() {
+		fmt.Println("\n############## NEW FEATURE ######################\n")
+
 		feature := features.Read()
 		fmt.Println("col len", feature.ColumnsLength())
 		fmt.Println("prop len", feature.PropertiesLength())
@@ -51,19 +53,17 @@ func main() {
 		fmt.Println(res)
 
 		// READ geometry
-		g := feature.Geometry(nil)
-		if g == nil {
+		geom, _ := flatgeobuf_go.ParseGeometry(header, feature.Geometry(nil))
+
+		if geom == nil {
 			continue
 		}
-		fmt.Println(g.Type(), g.PartsLength(), ":")
-		for i := 0; i < g.PartsLength(); i++ {
-			var gp FlatGeobuf.Geometry
-			g.Parts(&gp, i)
-			fmt.Println("  ", i, gp.Type(), gp.XyLength())
-			for j := 0; j < gp.XyLength(); j += 2 {
-				fmt.Printf(" %f,%f ", gp.Xy(j), gp.Xy(j+1))
-			}
-			fmt.Println()
-		}
+
+		repr, _ := geojson.Marshal(geom)
+
+		fmt.Printf("%s\n", repr)
+
+		fmt.Println("\n####################################\n")
+
 	}
 }
