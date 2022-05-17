@@ -1,7 +1,9 @@
 package index
 
 import (
+	"encoding/binary"
 	"fmt"
+	"math"
 )
 
 type NodeItem struct {
@@ -80,11 +82,25 @@ func NewPackedRTree(numItems uint64, nodeSize uint16, data []byte) (*PackedRTree
 
 	prt := &PackedRTree{
 		extent:      NodeItem{},
-		items:       make([]NodeItem, numNodes),
+		items:       make([]NodeItem, 0, numNodes),
 		numItems:    numItems,
 		numNodes:    numNodes,
 		nodeSize:    nodeSize,
 		levelBounds: nil,
+	}
+
+	for i := 0; i < len(data); i += 8 * 5 {
+		ni := NodeItem{}
+		minxb := binary.LittleEndian.Uint64(data[i : i+8])
+		ni.minX = math.Float64frombits(minxb)
+		minyb := binary.LittleEndian.Uint64(data[i+8 : i+8*2])
+		ni.minY = math.Float64frombits(minyb)
+		maxxb := binary.LittleEndian.Uint64(data[i+8*2 : i+8*3])
+		ni.maxX = math.Float64frombits(maxxb)
+		maxyb := binary.LittleEndian.Uint64(data[i+8*3 : i+8*4])
+		ni.maxY = math.Float64frombits(maxyb)
+		ni.offset = binary.LittleEndian.Uint64(data[i+8*4 : i+8*5])
+		prt.items = append(prt.items, ni)
 	}
 
 	prt.generateLevelBounds()
