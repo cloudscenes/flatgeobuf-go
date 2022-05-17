@@ -68,13 +68,6 @@ type PackedRTree struct {
 }
 
 func NewPackedRTree(numItems uint64, nodeSize uint16, data []byte) (*PackedRTree, error) {
-	if nodeSize < 2 {
-		return nil, fmt.Errorf("node size must be at least 2")
-	}
-	if numItems == 0 {
-		return nil, fmt.Errorf("number of items must be greater than 0")
-	}
-
 	numNodes, err := CalcTreeSize(numItems, nodeSize)
 	if err != nil {
 		return nil, err
