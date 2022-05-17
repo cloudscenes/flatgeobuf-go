@@ -2,13 +2,11 @@ package flatgeobuf_go
 
 import (
 	"bytes"
-	"encoding/binary"
 	"errors"
 	"flatgeobuf-go/FlatGeobuf"
 	"flatgeobuf-go/index"
 	"fmt"
 	"github.com/google/flatbuffers/go"
-	"math"
 )
 
 const supportedVersion uint8 = 3
@@ -45,15 +43,10 @@ type FGBReader struct {
 }
 
 func NewFGBReader(b []byte) (*FGBReader, error) {
-	fmt.Printf("magic bytes %x\n", b[:8])
-
-	version, err := Version(b[:8])
-
+	_, err := Version(b[:8])
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println(version)
 
 	res := FGBReader{b: b}
 
@@ -85,19 +78,4 @@ func (fgb *FGBReader) Header() *FlatGeobuf.Header {
 
 func (fgb *FGBReader) Features() *Features {
 	return NewFeatures(fgb.b[fgb.featuresOffset:])
-}
-
-func (fgb *FGBReader) Index() {
-	for i := fgb.indexOffset; i < uint32(fgb.featuresOffset); i += 8 * 5 {
-		minxb := binary.LittleEndian.Uint64(fgb.b[i : i+8])
-		minx := math.Float64frombits(minxb)
-		minyb := binary.LittleEndian.Uint64(fgb.b[i+8 : i+8*2])
-		miny := math.Float64frombits(minyb)
-		maxxb := binary.LittleEndian.Uint64(fgb.b[i+8*2 : i+8*3])
-		maxx := math.Float64frombits(maxxb)
-		maxyb := binary.LittleEndian.Uint64(fgb.b[i+8*3 : i+8*4])
-		maxy := math.Float64frombits(maxyb)
-		offb := binary.LittleEndian.Uint64(fgb.b[i+8*4 : i+8*5])
-		fmt.Printf("offset %d (%v,%v) (%v,%v) %v\n", (i-fgb.indexOffset)/(8*5), minx, miny, maxx, maxy, offb)
-	}
 }
