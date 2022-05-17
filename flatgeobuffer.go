@@ -41,6 +41,7 @@ type FGBReader struct {
 	b              []byte
 	indexOffset    uint32
 	featuresOffset flatbuffers.UOffsetT
+	prt            *index.PackedRTree
 }
 
 func NewFGBReader(b []byte) (*FGBReader, error) {
@@ -64,7 +65,10 @@ func NewFGBReader(b []byte) (*FGBReader, error) {
 	if header.IndexNodeSize() != 0 {
 		indexLength, err = index.CalcTreeSize(header.FeaturesCount(), header.IndexNodeSize())
 		prt, err := index.NewPackedRTree(header.FeaturesCount(), header.IndexNodeSize(), b[res.indexOffset:uint64(res.indexOffset)+indexLength])
-		fmt.Println(prt, err)
+		if err != nil {
+			return nil, fmt.Errorf("could not read index: %w", err)
+		}
+		res.prt = prt
 	}
 
 	res.featuresOffset = flatbuffers.UOffsetT(8 + flatbuffers.SizeUint32 + headerLength + uint32(indexLength))
