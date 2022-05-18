@@ -31,3 +31,62 @@ func TestCalcTreeSize(t *testing.T) {
 		})
 	}
 }
+
+func TestNodeItem_intersects(t *testing.T) {
+	tests := []struct {
+		name   string
+		target NodeItem
+		args   NodeItem
+		want   bool
+	}{
+		{
+			name:   "no intersection",
+			target: NodeItem{0, 0, 10, 10, 0},
+			args:   NodeItem{11, 11, 20, 20, 0},
+			want:   false,
+		},
+		{
+			name:   "no intersection Y",
+			target: NodeItem{0, 0, 10, 10, 0},
+			args:   NodeItem{0, 11, 20, 20, 0},
+			want:   false,
+		},
+		{
+			name:   "no intersection 2",
+			target: NodeItem{11, 11, 20, 20, 0},
+			args:   NodeItem{0, 0, 10, 10, 0},
+			want:   false,
+		},
+		{
+			name:   "no intersection Y 2",
+			target: NodeItem{0, 11, 20, 20, 0},
+			args:   NodeItem{0, 0, 10, 10, 0},
+			want:   false,
+		},
+		{
+			name:   "intersects",
+			target: NodeItem{0, 0, 10, 10, 0},
+			args:   NodeItem{5, 5, 20, 20, 0},
+			want:   true,
+		},
+		{
+			name:   "contained",
+			target: NodeItem{0, 0, 10, 10, 0},
+			args:   NodeItem{2, 2, 8, 8, 0},
+			want:   true,
+		},
+		{
+			name:   "contains",
+			target: NodeItem{2, 2, 8, 8, 0},
+			args:   NodeItem{0, 0, 10, 10, 0},
+			want:   true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.target.intersects(tt.args); got != tt.want {
+				t.Errorf("intersects() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -29,6 +29,22 @@ func (ni *NodeItem) expand(n NodeItem) {
 	}
 }
 
+func (ni *NodeItem) intersects(n NodeItem) bool {
+	if ni.maxX < n.minX {
+		return false
+	}
+	if ni.maxY < n.minY {
+		return false
+	}
+	if ni.minX > n.maxX {
+		return false
+	}
+	if ni.minY > n.maxY {
+		return false
+	}
+	return true
+}
+
 const nodeItemLen = 8*4 + 8
 
 func CalcTreeSize(numItems uint64, nodeSize uint16) (uint64, error) {
