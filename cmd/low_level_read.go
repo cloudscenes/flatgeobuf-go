@@ -23,6 +23,9 @@ func main() {
 
 	fgb, err := flatgeobuf_go.NewFGBReader(b)
 
+	index := fgb.Index()
+	fmt.Println(index)
+
 	header := fgb.Header()
 	crs := header.Crs(nil)
 

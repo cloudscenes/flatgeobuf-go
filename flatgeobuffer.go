@@ -57,7 +57,7 @@ func NewFGBReader(b []byte) (*FGBReader, error) {
 	header := FlatGeobuf.GetSizePrefixedRootAsHeader(b, 8)
 	if header.IndexNodeSize() != 0 {
 		indexLength, err = index.CalcTreeSize(header.FeaturesCount(), header.IndexNodeSize())
-		prt, err := index.NewPackedRTree(header.FeaturesCount(), header.IndexNodeSize(), b[res.indexOffset:uint64(res.indexOffset)+indexLength])
+		prt, err := index.ReadPackedRTreeBytes(header.FeaturesCount(), header.IndexNodeSize(), b[res.indexOffset:uint64(res.indexOffset)+indexLength])
 		if err != nil {
 			return nil, fmt.Errorf("could not read index: %w", err)
 		}
@@ -78,4 +78,8 @@ func (fgb *FGBReader) Header() *FlatGeobuf.Header {
 
 func (fgb *FGBReader) Features() *Features {
 	return NewFeatures(fgb.b[fgb.featuresOffset:])
+}
+
+func (fgb *FGBReader) Index() *index.PackedRTree {
+	return fgb.prt
 }

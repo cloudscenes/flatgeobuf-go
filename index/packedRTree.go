@@ -14,6 +14,19 @@ type NodeItem struct {
 	offset uint64
 }
 
+func (ni *NodeItem) readFromBytes(b []byte) {
+	minxb := binary.LittleEndian.Uint64(b[:8])
+	ni.minX = math.Float64frombits(minxb)
+	minyb := binary.LittleEndian.Uint64(b[8 : 8*2])
+	ni.minY = math.Float64frombits(minyb)
+	maxxb := binary.LittleEndian.Uint64(b[8*2 : 8*3])
+	ni.maxX = math.Float64frombits(maxxb)
+	maxyb := binary.LittleEndian.Uint64(b[8*3 : 8*4])
+	ni.maxY = math.Float64frombits(maxyb)
+	ni.offset = binary.LittleEndian.Uint64(b[8*4 : 8*5])
+	fmt.Printf("\n%#v\n%#v\n\n", b, *ni)
+}
+
 func (ni *NodeItem) expand(n NodeItem) {
 	if n.minX < ni.minX {
 		ni.minX = n.minX
@@ -83,7 +96,7 @@ type PackedRTree struct {
 	levelBounds []LevelBounds
 }
 
-func NewPackedRTree(numItems uint64, nodeSize uint16, data []byte) (*PackedRTree, error) {
+func ReadPackedRTreeBytes(numItems uint64, nodeSize uint16, data []byte) (*PackedRTree, error) {
 	numNodes, err := CalcTreeSize(numItems, nodeSize)
 	if err != nil {
 		return nil, err
@@ -100,15 +113,7 @@ func NewPackedRTree(numItems uint64, nodeSize uint16, data []byte) (*PackedRTree
 
 	for i := 0; i < len(data); i += 8 * 5 {
 		ni := NodeItem{}
-		minxb := binary.LittleEndian.Uint64(data[i : i+8])
-		ni.minX = math.Float64frombits(minxb)
-		minyb := binary.LittleEndian.Uint64(data[i+8 : i+8*2])
-		ni.minY = math.Float64frombits(minyb)
-		maxxb := binary.LittleEndian.Uint64(data[i+8*2 : i+8*3])
-		ni.maxX = math.Float64frombits(maxxb)
-		maxyb := binary.LittleEndian.Uint64(data[i+8*3 : i+8*4])
-		ni.maxY = math.Float64frombits(maxyb)
-		ni.offset = binary.LittleEndian.Uint64(data[i+8*4 : i+8*5])
+		ni.readFromBytes(data[i : i+8*5])
 		prt.items = append(prt.items, ni)
 	}
 
