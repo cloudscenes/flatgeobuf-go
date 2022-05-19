@@ -1,6 +1,9 @@
 package index
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestCalcTreeSize(t *testing.T) {
 	type args struct {
@@ -86,6 +89,71 @@ func TestNodeItem_intersects(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.target.intersects(tt.args); got != tt.want {
 				t.Errorf("intersects() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNodeItem_expand(t *testing.T) {
+	tests := []struct {
+		name   string
+		target *NodeItem
+		args   NodeItem
+		want   NodeItem
+	}{
+		{
+			name:   "equal",
+			target: &NodeItem{0, 0, 10, 10, 0},
+			args:   NodeItem{0, 0, 10, 10, 0},
+			want:   NodeItem{0, 0, 10, 10, 0},
+		},
+		{
+			name:   "contained",
+			target: &NodeItem{0, 0, 10, 10, 0},
+			args:   NodeItem{3, 3, 8, 8, 0},
+			want:   NodeItem{0, 0, 10, 10, 0},
+		},
+		{
+			name:   "contains",
+			target: &NodeItem{3, 3, 8, 8, 0},
+			args:   NodeItem{0, 0, 10, 10, 0},
+			want:   NodeItem{0, 0, 10, 10, 0},
+		},
+		{
+			name:   "disjoint",
+			target: &NodeItem{0, 0, 3, 3, 0},
+			args:   NodeItem{8, 8, 10, 10, 0},
+			want:   NodeItem{0, 0, 10, 10, 0},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.target.expand(tt.args)
+			if !reflect.DeepEqual(*tt.target, tt.want) {
+				t.Errorf("expand() = %v, want %v", *tt.target, tt.want)
+			}
+		})
+	}
+}
+
+func TestNodeItem_ReadFromBytes(t *testing.T) {
+	tests := []struct {
+		name string
+		args []byte
+		want NodeItem
+	}{
+		{
+			name: "simple box",
+			args: []byte{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x8, 0x40, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x8, 0x40, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0},
+			want: NodeItem{0, 0, 3, 3, 1},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ni := NodeItem{}
+			ni.readFromBytes(tt.args)
+			if !reflect.DeepEqual(ni, tt.want) {
+				t.Errorf("read from bytes() = %v, want %v", ni, tt.want)
 			}
 		})
 	}
