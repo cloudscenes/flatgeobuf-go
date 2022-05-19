@@ -158,3 +158,30 @@ func TestNodeItem_ReadFromBytes(t *testing.T) {
 		})
 	}
 }
+
+func TestPackedRTree_generateLevelBounds(t *testing.T) {
+	tests := []struct {
+		name  string
+		input PackedRTree
+		want  []LevelBounds
+	}{
+		{
+			name:  "simple",
+			input: PackedRTree{numItems: 2, nodeSize: 16, levelBounds: nil},
+			want:  []LevelBounds{{0, 1}, {1, 3}},
+		},
+		{
+			name:  "bigger",
+			input: PackedRTree{numItems: 200, nodeSize: 16, levelBounds: nil},
+			want:  []LevelBounds{{0, 1}, {1, 14}, {14, 214}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.input.generateLevelBounds()
+			if !reflect.DeepEqual(tt.input.levelBounds, tt.want) {
+				t.Errorf("generate level bounds() = %v, want %v", tt.input.levelBounds, tt.want)
+			}
+		})
+	}
+}
