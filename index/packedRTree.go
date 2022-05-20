@@ -87,7 +87,7 @@ type LevelBounds struct {
 }
 
 type PackedRTree struct {
-	extent      NodeItem
+	extent      *NodeItem
 	items       []NodeItem
 	numItems    uint64
 	numNodes    uint64
@@ -102,7 +102,7 @@ func ReadPackedRTreeBytes(numItems uint64, nodeSize uint16, data []byte) (*Packe
 	}
 
 	prt := &PackedRTree{
-		extent:      NodeItem{},
+		extent:      nil,
 		items:       make([]NodeItem, 0, numItems),
 		numItems:    numItems,
 		numNodes:    numNodes,
@@ -114,6 +114,10 @@ func ReadPackedRTreeBytes(numItems uint64, nodeSize uint16, data []byte) (*Packe
 		ni := NodeItem{}
 		ni.readFromBytes(data[i : i+8*5])
 		prt.items = append(prt.items, ni)
+		if prt.extent == nil {
+			prt.extent = &ni
+		}
+		prt.extent.expand(ni)
 	}
 
 	prt.generateLevelBounds()
