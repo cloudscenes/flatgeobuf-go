@@ -43,13 +43,14 @@ func main() {
 	// READ features
 	features := fgb.Features()
 
+	fmt.Println(index)
 	searchResult := index.Search(1, 1, 2, 2)
 
 	for i, v := range searchResult {
 		feature := features.ReadAt(v.Offset)
 		geom, _ := flatgeobuf_go.ParseGeometry(header, feature.Geometry(nil))
 		res, _ := wkt.Marshal(geom)
-		fmt.Printf("found %d - %s - %v\n", i, res, geom)
+		fmt.Printf("found %d - %s\n", i, res)
 	}
 
 	for features.Next() {

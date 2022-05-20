@@ -24,7 +24,6 @@ func (ni *NodeItem) readFromBytes(b []byte) {
 	maxyb := binary.LittleEndian.Uint64(b[8*3 : 8*4])
 	ni.maxY = math.Float64frombits(maxyb)
 	ni.offset = binary.LittleEndian.Uint64(b[8*4 : 8*5])
-	fmt.Printf("\n%#v\n%#v\n\n", b, *ni)
 }
 
 func (ni *NodeItem) expand(n NodeItem) {
@@ -168,7 +167,6 @@ func (prt *PackedRTree) Search(minX float64, minY float64, maxX float64, maxY fl
 	for len(toSearch) > 0 {
 		v := toSearch[0]
 		toSearch = toSearch[1:]
-		fmt.Println(v)
 		for pos := v.start; pos < v.end; pos++ {
 			if !bounds.intersects(prt.items[pos]) {
 				continue
@@ -179,11 +177,9 @@ func (prt *PackedRTree) Search(minX float64, minY float64, maxX float64, maxY fl
 					index:  pos,
 				}
 				result = append(result, item)
-				fmt.Println("search result", item)
 			} else {
 				lb := LevelBounds{prt.items[pos].offset, prt.items[pos].offset + 16}
 				toSearch = append(toSearch, lb)
-				fmt.Println("level bounds", lb)
 			}
 		}
 	}
