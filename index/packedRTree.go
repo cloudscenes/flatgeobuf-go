@@ -104,7 +104,7 @@ func ReadPackedRTreeBytes(numItems uint64, nodeSize uint16, data []byte) (*Packe
 
 	prt := &PackedRTree{
 		extent:      NodeItem{},
-		items:       make([]NodeItem, 0, numNodes),
+		items:       make([]NodeItem, 0, numItems),
 		numItems:    numItems,
 		numNodes:    numNodes,
 		nodeSize:    nodeSize,
@@ -150,4 +150,42 @@ func (prt *PackedRTree) generateLevelBounds() {
 	}
 
 	prt.levelBounds = levelBounds
+}
+
+type SearchResultItem struct {
+	Offset uint32
+	index  uint64
+}
+
+func (prt *PackedRTree) Search(minX float64, minY float64, maxX float64, maxY float64) []SearchResultItem {
+	bounds := NodeItem{minX, minY, maxX, maxY, 0}
+
+	toSearch := []LevelBounds{prt.levelBounds[0]}
+	result := make([]SearchResultItem, 0)
+
+	lastBound := prt.levelBounds[len(prt.levelBounds)-1]
+
+	for len(toSearch) > 0 {
+		v := toSearch[0]
+		toSearch = toSearch[1:]
+		fmt.Println(v)
+		for pos := v.start; pos < v.end; pos++ {
+			if !bounds.intersects(prt.items[pos]) {
+				continue
+			}
+			if pos >= lastBound.start && pos <= lastBound.end {
+				item := SearchResultItem{
+					Offset: uint32(prt.items[pos].offset),
+					index:  pos,
+				}
+				result = append(result, item)
+				fmt.Println("search result", item)
+			} else {
+				lb := LevelBounds{prt.items[pos].offset, prt.items[pos].offset + 16}
+				toSearch = append(toSearch, lb)
+				fmt.Println("level bounds", lb)
+			}
+		}
+	}
+	return result
 }

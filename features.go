@@ -45,3 +45,7 @@ func (fs *Features) Next() bool {
 func (fs *Features) Read() *FlatGeobuf.Feature {
 	return FlatGeobuf.GetSizePrefixedRootAsFeature(fs.b, flatbuffers.UOffsetT(fs.pos))
 }
+
+func (fs *Features) ReadAt(pos uint32) *FlatGeobuf.Feature {
+	return FlatGeobuf.GetSizePrefixedRootAsFeature(fs.b, flatbuffers.UOffsetT(pos))
+}
