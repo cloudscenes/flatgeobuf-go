@@ -4,19 +4,26 @@ import (
 	"encoding/binary"
 	"flatgeobuf-go/FlatGeobuf"
 	"github.com/google/flatbuffers/go"
+	"github.com/twpayne/go-geom"
 )
 
 type Features struct {
-	b       []byte
-	pos     uint32
-	started bool // TODO: this should not be needed
+	crs          *FlatGeobuf.Crs
+	layout       geom.Layout
+	geometryType FlatGeobuf.GeometryType
+	b            []byte
+	pos          uint32
+	started      bool // TODO: this should not be needed
 }
 
-func NewFeatures(b []byte) *Features {
+func NewFeatures(b []byte, header *FlatGeobuf.Header) *Features {
 	return &Features{
-		b:       b,
-		pos:     0,
-		started: false,
+		crs:          header.Crs(nil),
+		layout:       ParseLayout(header),
+		geometryType: header.GeometryType(),
+		b:            b,
+		pos:          0,
+		started:      false,
 	}
 }
 
@@ -44,4 +51,10 @@ func (fs *Features) Next() bool {
 
 func (fs *Features) Read() *FlatGeobuf.Feature {
 	return FlatGeobuf.GetSizePrefixedRootAsFeature(fs.b, flatbuffers.UOffsetT(fs.pos))
+}
+
+func (fs *Features) ReadGeometry() (geom.T, error) {
+	feature := fs.Read()
+
+	return ParseGeometry(feature.Geometry(nil), fs.geometryType, fs.layout, fs.crs)
 }

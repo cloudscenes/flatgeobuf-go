@@ -53,7 +53,7 @@ func main() {
 		fmt.Println(res)
 
 		// READ geometry
-		geom, _ := flatgeobuf_go.ParseGeometry(header, feature.Geometry(nil))
+		geom, _ := features.ReadGeometry()
 
 		if geom == nil {
 			continue
