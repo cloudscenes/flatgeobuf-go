@@ -77,7 +77,7 @@ func (fgb *FGBReader) Header() *FlatGeobuf.Header {
 }
 
 func (fgb *FGBReader) Features() *Features {
-	return NewFeatures(fgb.b[fgb.featuresOffset:])
+	return NewFeatures(fgb.b[fgb.featuresOffset:], fgb.Header())
 }
 
 func (fgb *FGBReader) Index() *index.PackedRTree {
