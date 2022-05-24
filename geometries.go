@@ -33,7 +33,8 @@ func ParseGeometry(geometry *FlatGeobuf.Geometry, geometryType FlatGeobuf.Geomet
 
 func parseSimpleGeometry(geometry *FlatGeobuf.Geometry, layout geom.Layout, geomType FlatGeobuf.GeometryType) (geom.T, error) {
 	coords := make([]float64, 0, geometry.XyLength()/2*layout.Stride())
-	for i := 0; i < geometry.XyLength()/2; i += 1 {
+	geomLen := geometry.XyLength() / 2
+	for i := 0; i < geomLen; i += 1 {
 		coords = append(coords, geometry.Xy(i*2), geometry.Xy(i*2+1))
 
 		if layout == geom.XYZ || layout == geom.XYZM {
