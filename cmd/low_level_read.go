@@ -48,7 +48,7 @@ func main() {
 
 	for i, v := range searchResult {
 		feature := features.ReadAt(v.Offset)
-		geom, _ := flatgeobuf_go.ParseGeometry(header, feature.Geometry(nil))
+		geom, _ := flatgeobuf_go.ParseGeometry(feature.Geometry(nil), header.GeometryType(), flatgeobuf_go.ParseLayout(header), header.Crs(nil))
 		res, _ := wkt.Marshal(geom)
 		fmt.Printf("found %d - %s\n", i, res)
 	}
