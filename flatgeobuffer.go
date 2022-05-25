@@ -44,7 +44,7 @@ type FGBReader struct {
 
 func NewFGB(r io.Reader) (*FGBReader, error) {
 	buffer := make([]byte, 12)
-	n, err := r.Read(buffer)
+	n, err := io.ReadFull(r, buffer)
 	if err != nil || n < 12 {
 		return nil, fmt.Errorf("could not read first bytes: %w", err)
 	}
@@ -66,7 +66,7 @@ func NewFGB(r io.Reader) (*FGBReader, error) {
 	if header.IndexNodeSize() != 0 {
 		indexLength, err = index.CalcTreeSize(header.FeaturesCount(), header.IndexNodeSize())
 		buffer = make([]byte, indexLength)
-		n, err = r.Read(buffer)
+		n, err = io.ReadFull(r, buffer)
 		if err != nil || n < int(indexLength) {
 			return nil, fmt.Errorf("could not read index: %w", err)
 		}
@@ -77,9 +77,8 @@ func NewFGB(r io.Reader) (*FGBReader, error) {
 		}
 		fgb.prt = prt
 	}
-	buffer, err = io.ReadAll(r)
 
-	fgb.features = NewFeatures(buffer, fgb.Header())
+	fgb.features = NewFeatures(r, fgb.Header())
 
 	return &fgb, nil
 }

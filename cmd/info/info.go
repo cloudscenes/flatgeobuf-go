@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	flatgeobuf_go "flatgeobuf-go"
 	"fmt"
@@ -42,7 +43,9 @@ func main() {
 	// TODO: implement info
 	fmt.Println(*info)
 
-	fgb, err := flatgeobuf_go.NewFGB(f)
+	br := bufio.NewReader(f)
+
+	fgb, err := flatgeobuf_go.NewFGB(br)
 	if err != nil {
 		log.Fatal(err)
 	}
