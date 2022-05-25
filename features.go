@@ -3,26 +3,21 @@ package flatgeobuf_go
 import (
 	"encoding/binary"
 	"flatgeobuf-go/FlatGeobuf"
-	"github.com/twpayne/go-geom"
 	"io"
 	"log"
 )
 
 type Features struct {
-	crs          *FlatGeobuf.Crs
-	layout       geom.Layout
-	geometryType FlatGeobuf.GeometryType
-	r            io.Reader
-	fLen         uint32
+	header *FlatGeobuf.Header
+	r      io.Reader
+	fLen   uint32
 }
 
 func NewFeatures(r io.Reader, header *FlatGeobuf.Header) *Features {
 	return &Features{
-		crs:          header.Crs(nil),
-		layout:       ParseLayout(header),
-		geometryType: header.GeometryType(),
-		r:            r,
-		fLen:         0,
+		header: header,
+		r:      r,
+		fLen:   0,
 	}
 }
 
@@ -48,21 +43,23 @@ func (fs *Features) Next() bool {
 	return true
 }
 
-func (fs *Features) Read() *FlatGeobuf.Feature {
+func (fs *Features) Read() (*Feature, error) {
 	b := make([]byte, fs.fLen)
 	// TODO: handle errors
 	io.ReadFull(fs.r, b)
-	return FlatGeobuf.GetRootAsFeature(b, 0)
+
+	fgbFeature := FlatGeobuf.GetRootAsFeature(b, 0)
+
+	feature, err := NewFeature(fgbFeature, fs.header)
+	if err != nil {
+		return nil, err
+	}
+
+	return feature, nil
 }
 
 func (fs *Features) ReadAt(pos uint32) *FlatGeobuf.Feature {
 	//TODO: this cannot be implemented with a simple reader
 	return nil
 	//return FlatGeobuf.GetSizePrefixedRootAsFeature(fs.b, flatbuffers.UOffsetT(pos))
-}
-
-func (fs *Features) ReadGeometry() (geom.T, error) {
-	feature := fs.Read()
-
-	return ParseGeometry(feature.Geometry(nil), fs.geometryType, fs.layout, fs.crs)
 }
