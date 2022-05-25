@@ -2,7 +2,6 @@ package flatgeobuf_go
 
 import (
 	"fmt"
-	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/encoding/wkt"
 	"log"
 	"os"
@@ -26,23 +25,20 @@ func readFile(path string) *FGBReader {
 
 func featuresToMap(path string) map[string]string {
 	fgb := readFile(path)
-
-	header := fgb.Header()
-	columns := NewColumns(header)
 	features := fgb.Features()
-	propertyDecoder := NewPropertyDecoder(columns)
 
 	featuresMap := make(map[string]string)
 
 	for features.Next() {
-		feature := features.Read()
-		props := propertyDecoder.Decode(feature.PropertiesBytes())
-		geom, err := features.ReadGeometry()
+		feature, err := features.Read()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		geomWKT, err := wkt.Marshal(geom, wkt.EncodeOptionWithMaxDecimalDigits(10))
+		props := feature.Properties()
+		geometry := feature.Geometry()
+
+		geomWKT, err := wkt.Marshal(geometry, wkt.EncodeOptionWithMaxDecimalDigits(10))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -124,7 +120,7 @@ func TestUnsupportedGeometries(t *testing.T) {
 	tests := []struct {
 		name    string
 		file    string
-		want    geom.T
+		want    *Feature
 		wantErr error
 	}{
 		{
@@ -146,7 +142,7 @@ func TestUnsupportedGeometries(t *testing.T) {
 			features := fgb.Features()
 
 			for features.Next() {
-				got, err := features.ReadGeometry()
+				got, err := features.Read()
 
 				// TODO: create custom error to avoid weird handling
 				if got != tt.want || !strings.HasPrefix(err.Error(), "unable to parse geometry: unsupported geometry type") {

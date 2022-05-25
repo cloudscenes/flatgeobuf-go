@@ -3,6 +3,7 @@ package flatgeobuf_go
 import (
 	"fmt"
 	"github.com/twpayne/go-geom"
+	"log"
 	"os"
 	"reflect"
 	"testing"
@@ -31,6 +32,7 @@ func TestVersion(t *testing.T) {
 	}
 }
 
+// TODO: fix test when ReadAt is implemented
 func searchFGB(file string, box []float64) ([]geom.T, []geom.T, error) {
 	f, err := os.Open(file)
 	defer f.Close()
@@ -42,20 +44,25 @@ func searchFGB(file string, box []float64) ([]geom.T, []geom.T, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	header := fgb.Header()
+	//header := fgb.Header()
 	features := fgb.Features()
 	searchResult := fgb.Index().Search(box[0], box[1], box[2], box[3])
 	searchGeoms := make([]geom.T, len(searchResult))
-	for i, v := range searchResult {
-		feature := features.ReadAt(v.Offset)
-		g, _ := ParseGeometry(feature.Geometry(nil), header.GeometryType(), ParseLayout(header), header.Crs(nil))
-		searchGeoms[i] = g
+	for i, _ := range searchResult {
+		//feature := features.ReadAt(v.Offset)
+		//g, _ := ParseGeometry(feature.Geometry(nil), header.GeometryType(), ParseLayout(header), header.Crs(nil))
+		searchGeoms[i] = nil // g
 	}
 
 	seqGeoms := make([]geom.T, 0)
 	filterBounds := geom.NewBounds(geom.XY).Set(box...)
 	for features.Next() {
-		g, _ := features.ReadGeometry()
+		feature, err := features.Read()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		g := feature.Geometry()
 		gBounds := geom.NewBounds(geom.XY).Extend(g)
 		if gBounds.Overlaps(geom.XY, filterBounds) {
 			seqGeoms = append(seqGeoms, g)

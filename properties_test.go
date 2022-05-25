@@ -20,13 +20,16 @@ func TestPropertyDecoder_Decode(t *testing.T) {
 
 	features := fgb.Features()
 	features.Next()
-	feature := features.Read()
-	props := feature.PropertiesBytes()
+	feature, err := features.Read()
+	if err != nil {
+		log.Fatal(err)
+	}
+	props := feature.Properties()
 
 	tests := []struct {
 		name  string
 		cols  *Columns
-		props []byte
+		props map[string]interface{}
 		want  map[string]interface{}
 	}{
 		{
@@ -55,10 +58,7 @@ func TestPropertyDecoder_Decode(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			pd := &PropertyDecoder{
-				c: tt.cols,
-			}
-			if got := pd.Decode(tt.props); !reflect.DeepEqual(got, tt.want) {
+			if got := tt.props; !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Decode() = %v, want %v", got, tt.want)
 			}
 		})
