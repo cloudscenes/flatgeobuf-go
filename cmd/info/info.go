@@ -4,7 +4,6 @@ import (
 	"flag"
 	flatgeobuf_go "flatgeobuf-go"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"runtime/pprof"
@@ -40,18 +39,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	b, err := io.ReadAll(f)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// TODO: implement info
 	fmt.Println(*info)
 
-	fgb, err := flatgeobuf_go.NewFGBReader(b)
+	fgb, err := flatgeobuf_go.NewFGB(f)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	features := fgb.Features()
 	for features.Next() {
 		geom, _ := features.ReadGeometry()

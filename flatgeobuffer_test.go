@@ -3,7 +3,6 @@ package flatgeobuf_go
 import (
 	"fmt"
 	"github.com/twpayne/go-geom"
-	"io"
 	"os"
 	"reflect"
 	"testing"
@@ -39,12 +38,7 @@ func searchFGB(file string, box []float64) ([]geom.T, []geom.T, error) {
 		return nil, nil, err
 	}
 
-	b, err := io.ReadAll(f)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	fgb, err := NewFGBReader(b)
+	fgb, err := NewFGB(f)
 	if err != nil {
 		return nil, nil, err
 	}

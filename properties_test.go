@@ -1,7 +1,6 @@
 package flatgeobuf_go
 
 import (
-	"io"
 	"log"
 	"os"
 	"reflect"
@@ -14,11 +13,7 @@ func TestPropertyDecoder_Decode(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	b, err := io.ReadAll(f)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fgb, err := NewFGBReader(b)
+	fgb, err := NewFGB(f)
 
 	header := fgb.Header()
 	columns := NewColumns(header)

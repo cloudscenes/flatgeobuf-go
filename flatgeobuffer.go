@@ -7,6 +7,7 @@ import (
 	"flatgeobuf-go/index"
 	"fmt"
 	"github.com/google/flatbuffers/go"
+	"io"
 )
 
 const supportedVersion uint8 = 3
@@ -36,48 +37,59 @@ func Version(fileMagicBytes []byte) (string, error) {
 }
 
 type FGBReader struct {
-	b              []byte
-	indexOffset    uint32
-	featuresOffset flatbuffers.UOffsetT
-	prt            *index.PackedRTree
+	header   *FlatGeobuf.Header
+	features *Features
+	prt      *index.PackedRTree
 }
 
-func NewFGBReader(b []byte) (*FGBReader, error) {
-	_, err := Version(b[:8])
-	if err != nil {
-		panic(err)
+func NewFGB(r io.Reader) (*FGBReader, error) {
+	buffer := make([]byte, 12)
+	n, err := r.Read(buffer)
+	if err != nil || n < 12 {
+		return nil, fmt.Errorf("could not read first bytes: %w", err)
 	}
 
-	res := FGBReader{b: b}
+	fgb := FGBReader{}
 
-	headerLength := flatbuffers.GetUint32(b[8:12])
-	res.indexOffset = 8 + flatbuffers.SizeUint32 + headerLength
+	headerLength := flatbuffers.GetUint32(buffer[8:12])
+
+	buffer = make([]byte, headerLength)
+	n, err = r.Read(buffer)
+	if err != nil || n < int(headerLength) {
+		return nil, fmt.Errorf("could not read header: %w", err)
+	}
 
 	var indexLength uint64
-	header := FlatGeobuf.GetSizePrefixedRootAsHeader(b, 8)
+	header := FlatGeobuf.GetRootAsHeader(buffer, 0)
+	fgb.header = header
+
 	if header.IndexNodeSize() != 0 {
 		indexLength, err = index.CalcTreeSize(header.FeaturesCount(), header.IndexNodeSize())
-		prt, err := index.ReadPackedRTreeBytes(header.FeaturesCount(), header.IndexNodeSize(), b[res.indexOffset:uint64(res.indexOffset)+indexLength])
+		buffer = make([]byte, indexLength)
+		n, err = r.Read(buffer)
+		if err != nil || n < int(indexLength) {
+			return nil, fmt.Errorf("could not read index: %w", err)
+		}
+
+		prt, err := index.ReadPackedRTreeBytes(header.FeaturesCount(), header.IndexNodeSize(), buffer)
 		if err != nil {
 			return nil, fmt.Errorf("could not read index: %w", err)
 		}
-		res.prt = prt
+		fgb.prt = prt
 	}
+	buffer, err = io.ReadAll(r)
 
-	res.featuresOffset = flatbuffers.UOffsetT(8 + flatbuffers.SizeUint32 + headerLength + uint32(indexLength))
+	fgb.features = NewFeatures(buffer, fgb.Header())
 
-	// TODO: should we validate the size?
-	//featureLen := binary.LittleEndian.Uint32(b[res.featuresOffset : res.featuresOffset+4])
-
-	return &res, nil
+	return &fgb, nil
 }
 
 func (fgb *FGBReader) Header() *FlatGeobuf.Header {
-	return FlatGeobuf.GetSizePrefixedRootAsHeader(fgb.b, 8)
+	return fgb.header
 }
 
 func (fgb *FGBReader) Features() *Features {
-	return NewFeatures(fgb.b[fgb.featuresOffset:], fgb.Header())
+	return fgb.features
 }
 
 func (fgb *FGBReader) Index() *index.PackedRTree {

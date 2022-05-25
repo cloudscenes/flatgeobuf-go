@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/encoding/wkt"
-	"io"
 	"log"
 	"os"
 	"reflect"
@@ -17,11 +16,7 @@ func readFile(path string) *FGBReader {
 	if err != nil {
 		log.Fatal(err)
 	}
-	b, err := io.ReadAll(f)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fgb, err := NewFGBReader(b)
+	fgb, err := NewFGB(f)
 	if err != nil {
 		log.Fatal(err)
 	}
