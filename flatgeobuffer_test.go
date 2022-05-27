@@ -57,12 +57,12 @@ func searchFGB(file string, box []float64) ([]geom.T, []geom.T, error) {
 	seqGeoms := make([]geom.T, 0)
 	filterBounds := geom.NewBounds(geom.XY).Set(box...)
 	for features.Next() {
-		feature, err := features.Read()
+		feature := features.Read()
+
+		g, err := feature.Geometry()
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		g := feature.Geometry()
 		gBounds := geom.NewBounds(geom.XY).Extend(g)
 		if gBounds.Overlaps(geom.XY, filterBounds) {
 			seqGeoms = append(seqGeoms, g)

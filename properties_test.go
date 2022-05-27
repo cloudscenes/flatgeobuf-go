@@ -20,10 +20,7 @@ func TestPropertyDecoder_Decode(t *testing.T) {
 
 	features := fgb.Features()
 	features.Next()
-	feature, err := features.Read()
-	if err != nil {
-		log.Fatal(err)
-	}
+	feature := features.Read()
 	props := feature.Properties()
 
 	tests := []struct {

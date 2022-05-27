@@ -2,6 +2,7 @@ package flatgeobuf_go
 
 import (
 	"fmt"
+	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/encoding/wkt"
 	"log"
 	"os"
@@ -30,13 +31,12 @@ func featuresToMap(path string) map[string]string {
 	featuresMap := make(map[string]string)
 
 	for features.Next() {
-		feature, err := features.Read()
+		feature := features.Read()
+		props := feature.Properties()
+		geometry, err := feature.Geometry()
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		props := feature.Properties()
-		geometry := feature.Geometry()
 
 		geomWKT, err := wkt.Marshal(geometry, wkt.EncodeOptionWithMaxDecimalDigits(10))
 		if err != nil {
@@ -120,7 +120,7 @@ func TestUnsupportedGeometries(t *testing.T) {
 	tests := []struct {
 		name    string
 		file    string
-		want    *Feature
+		want    geom.T
 		wantErr error
 	}{
 		{
@@ -142,7 +142,7 @@ func TestUnsupportedGeometries(t *testing.T) {
 			features := fgb.Features()
 
 			for features.Next() {
-				got, err := features.Read()
+				got, err := features.Read().Geometry()
 
 				// TODO: create custom error to avoid weird handling
 				if got != tt.want || !strings.HasPrefix(err.Error(), "unable to parse geometry: unsupported geometry type") {
