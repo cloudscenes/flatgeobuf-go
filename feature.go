@@ -7,27 +7,28 @@ import (
 )
 
 type Feature struct {
-	geometry   geom.T
-	properties map[string]interface{}
+	fgbFeature   *FlatGeobuf.Feature
+	geometryType FlatGeobuf.GeometryType
+	crs          *FlatGeobuf.Crs
+	layout       geom.Layout
+	columns      *Columns
 }
 
-func NewFeature(fgbFeature *FlatGeobuf.Feature, header *FlatGeobuf.Header) (*Feature, error) {
-	geometry, err := parseGeometry(fgbFeature, header)
-	if err != nil {
-		return nil, err
-	}
-	props := parseProperties(fgbFeature, header)
+func NewFeature(fgbFeature *FlatGeobuf.Feature, header *FlatGeobuf.Header) *Feature {
 	feature := Feature{
-		geometry:   geometry,
-		properties: props,
+		fgbFeature:   fgbFeature,
+		geometryType: header.GeometryType(),
+		crs:          header.Crs(nil),
+		layout:       parseLayout(header),
+		columns:      NewColumns(header),
 	}
 
-	return &feature, nil
+	return &feature
 }
 
-func parseGeometry(fgbFeature *FlatGeobuf.Feature, header *FlatGeobuf.Header) (geom.T, error) {
-	geometry := fgbFeature.Geometry(nil)
-	geometryType := header.GeometryType()
+func (f *Feature) Geometry() (geom.T, error) {
+	geometry := f.fgbFeature.Geometry(nil)
+	geometryType := f.geometryType
 	if geometryType == FlatGeobuf.GeometryTypeUnknown {
 		geometryType = geometry.Type()
 	}
@@ -35,38 +36,30 @@ func parseGeometry(fgbFeature *FlatGeobuf.Feature, header *FlatGeobuf.Header) (g
 	var newGeom geom.T
 	var err error
 
-	layout := parseLayout(header)
 	if geometry.PartsLength() > 0 {
-		newGeom, err = parseMultiGeometry(geometry, layout, geometryType)
+		newGeom, err = parseMultiGeometry(geometry, f.layout, geometryType)
 	} else {
-		newGeom, err = parseSimpleGeometry(geometry, layout, geometryType)
+		newGeom, err = parseSimpleGeometry(geometry, f.layout, geometryType)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse geometry: %w", err)
 	}
 
-	crs := header.Crs(nil)
-	if crs == nil {
+	if f.crs == nil {
 		return newGeom, nil
 	}
 
-	sridGeom, _ := geom.SetSRID(newGeom, int(crs.Code()))
+	sridGeom, err := geom.SetSRID(newGeom, int(f.crs.Code()))
+	if err != nil {
+		return nil, fmt.Errorf("unable to set SRID: %w", err)
+	}
 
 	return sridGeom, nil
 }
 
-func parseProperties(fgbFeature *FlatGeobuf.Feature, header *FlatGeobuf.Header) map[string]interface{} {
-	columns := NewColumns(header)
-	propertyDecoder := NewPropertyDecoder(columns)
-	props := propertyDecoder.Decode(fgbFeature.PropertiesBytes())
+func (f *Feature) Properties() map[string]interface{} {
+	propertyDecoder := NewPropertyDecoder(f.columns)
+	props := propertyDecoder.Decode(f.fgbFeature.PropertiesBytes())
 
 	return props
-}
-
-func (f *Feature) Geometry() geom.T {
-	return f.geometry
-}
-
-func (f *Feature) Properties() map[string]interface{} {
-	return f.properties
 }

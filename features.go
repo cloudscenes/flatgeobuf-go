@@ -43,19 +43,16 @@ func (fs *Features) Next() bool {
 	return true
 }
 
-func (fs *Features) Read() (*Feature, error) {
+func (fs *Features) Read() *Feature {
 	b := make([]byte, fs.fLen)
 	// TODO: handle errors
 	io.ReadFull(fs.r, b)
 
 	fgbFeature := FlatGeobuf.GetRootAsFeature(b, 0)
 
-	feature, err := NewFeature(fgbFeature, fs.header)
-	if err != nil {
-		return nil, err
-	}
+	feature := NewFeature(fgbFeature, fs.header)
 
-	return feature, nil
+	return feature
 }
 
 func (fs *Features) ReadAt(pos uint32) *FlatGeobuf.Feature {
