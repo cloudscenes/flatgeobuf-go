@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	info := flag.Bool("info", false, "get info")
+	quiet := flag.Bool("q", false, "quiet mode")
 
 	f, err := os.Create("/tmp/fgb_info.pprof")
 	if err != nil {
@@ -40,9 +40,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// TODO: implement info
-	fmt.Println(*info)
-
 	br := bufio.NewReader(f)
 
 	fgb, err := flatgeobuf_go.NewFGB(br)
@@ -51,8 +48,17 @@ func main() {
 	}
 
 	features := fgb.Features()
+
+	if !*quiet {
+		fmt.Print(features.Summary())
+	}
+
 	for features.Next() {
 		feature := features.Read()
+
+		if *quiet {
+			continue
+		}
 
 		geom, _ := feature.Geometry()
 

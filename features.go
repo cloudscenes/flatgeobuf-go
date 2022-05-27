@@ -3,9 +3,11 @@ package flatgeobuf_go
 import (
 	"encoding/binary"
 	"flatgeobuf-go/FlatGeobuf"
+	"fmt"
 	"github.com/twpayne/go-geom"
 	"io"
 	"log"
+	"strings"
 )
 
 type Features struct {
@@ -85,4 +87,24 @@ func (fs *Features) Layout() geom.Layout {
 
 func (fs *Features) GeometryType() FlatGeobuf.GeometryType {
 	return fs.header.GeometryType()
+}
+
+func (fs *Features) FeatureCount() uint64 {
+	return fs.header.FeaturesCount()
+}
+
+func (fs *Features) Summary() string {
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("Geometry: %s\n", fs.GeometryType()))
+	b.WriteString(fmt.Sprintf("Feature Count: %d\n", fs.FeatureCount()))
+	// TODO: get extent
+	b.WriteString(fmt.Sprintf("SRS WKT:\n %s\n", fs.header.Crs(nil).Wkt()))
+
+	columns := NewColumns(fs.header)
+
+	for _, column := range columns.ids {
+		b.WriteString(fmt.Sprintf("%s: %s\n", column.Name(), columns.names[string(column.Name())].Type()))
+	}
+
+	return b.String()
 }
