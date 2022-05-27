@@ -1,10 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	flatgeobuf_go "flatgeobuf-go"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"runtime/pprof"
@@ -40,21 +40,21 @@ func main() {
 		log.Fatal(err)
 	}
 
-	b, err := io.ReadAll(f)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// TODO: implement info
 	fmt.Println(*info)
 
-	fgb, err := flatgeobuf_go.NewFGBReader(b)
+	br := bufio.NewReader(f)
+
+	fgb, err := flatgeobuf_go.NewFGB(br)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	features := fgb.Features()
 	for features.Next() {
-		geom, _ := features.ReadGeometry()
+		feature := features.Read()
+
+		geom, _ := feature.Geometry()
 
 		if geom == nil {
 			continue

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/encoding/wkt"
-	"io"
 	"log"
 	"os"
 	"reflect"
@@ -17,11 +16,7 @@ func readFile(path string) *FGBReader {
 	if err != nil {
 		log.Fatal(err)
 	}
-	b, err := io.ReadAll(f)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fgb, err := NewFGBReader(b)
+	fgb, err := NewFGB(f)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,23 +26,19 @@ func readFile(path string) *FGBReader {
 
 func featuresToMap(path string) map[string]string {
 	fgb := readFile(path)
-
-	header := fgb.Header()
-	columns := NewColumns(header)
 	features := fgb.Features()
-	propertyDecoder := NewPropertyDecoder(columns)
 
 	featuresMap := make(map[string]string)
 
 	for features.Next() {
 		feature := features.Read()
-		props := propertyDecoder.Decode(feature.PropertiesBytes())
-		geom, err := features.ReadGeometry()
+		props := feature.Properties()
+		geometry, err := feature.Geometry()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		geomWKT, err := wkt.Marshal(geom, wkt.EncodeOptionWithMaxDecimalDigits(10))
+		geomWKT, err := wkt.Marshal(geometry, wkt.EncodeOptionWithMaxDecimalDigits(10))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -151,7 +142,7 @@ func TestUnsupportedGeometries(t *testing.T) {
 			features := fgb.Features()
 
 			for features.Next() {
-				got, err := features.ReadGeometry()
+				got, err := features.Read().Geometry()
 
 				// TODO: create custom error to avoid weird handling
 				if got != tt.want || !strings.HasPrefix(err.Error(), "unable to parse geometry: unsupported geometry type") {

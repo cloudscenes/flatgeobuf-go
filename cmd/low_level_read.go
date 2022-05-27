@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/twpayne/go-geom/encoding/geojson"
 	"github.com/twpayne/go-geom/encoding/wkt"
-	"io"
 	"log"
 	"os"
 )
@@ -16,13 +15,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	b, err := io.ReadAll(f)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("total size: ", len(b))
-
-	fgb, err := flatgeobuf_go.NewFGBReader(b)
+	fgb, err := flatgeobuf_go.NewFGB(f)
 
 	index := fgb.Index()
 	header := fgb.Header()

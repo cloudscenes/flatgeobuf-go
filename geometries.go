@@ -6,31 +6,6 @@ import (
 	"github.com/twpayne/go-geom"
 )
 
-func ParseGeometry(geometry *FlatGeobuf.Geometry, geometryType FlatGeobuf.GeometryType, layout geom.Layout, crs *FlatGeobuf.Crs) (geom.T, error) {
-	if geometryType == FlatGeobuf.GeometryTypeUnknown {
-		geometryType = geometry.Type()
-	}
-
-	var newGeom geom.T
-	var err error
-	if geometry.PartsLength() > 0 {
-		newGeom, err = parseMultiGeometry(geometry, layout, geometryType)
-	} else {
-		newGeom, err = parseSimpleGeometry(geometry, layout, geometryType)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse geometry: %w", err)
-	}
-
-	if crs == nil {
-		return newGeom, nil
-	}
-
-	sridGeom, _ := geom.SetSRID(newGeom, int(crs.Code()))
-
-	return sridGeom, nil
-}
-
 func parseSimpleGeometry(geometry *FlatGeobuf.Geometry, layout geom.Layout, geomType FlatGeobuf.GeometryType) (geom.T, error) {
 	coords := make([]float64, 0, geometry.XyLength()/2*layout.Stride())
 	geomLen := geometry.XyLength() / 2
@@ -134,7 +109,7 @@ func getEnds(geometry *FlatGeobuf.Geometry, stride int) []int {
 	return ends
 }
 
-func ParseLayout(header *FlatGeobuf.Header) geom.Layout {
+func parseLayout(header *FlatGeobuf.Header) geom.Layout {
 	layout := geom.XY
 	if header.HasZ() && header.HasM() {
 		layout = geom.XYZM
