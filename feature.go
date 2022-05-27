@@ -7,20 +7,14 @@ import (
 )
 
 type Feature struct {
-	fgbFeature   *FlatGeobuf.Feature
-	geometryType FlatGeobuf.GeometryType
-	crs          *FlatGeobuf.Crs
-	layout       geom.Layout
-	columns      *Columns
+	fgbFeature *FlatGeobuf.Feature
+	features   *Features
 }
 
-func NewFeature(fgbFeature *FlatGeobuf.Feature, header *FlatGeobuf.Header) *Feature {
+func NewFeature(fgbFeature *FlatGeobuf.Feature, features *Features) *Feature {
 	feature := Feature{
-		fgbFeature:   fgbFeature,
-		geometryType: header.GeometryType(),
-		crs:          header.Crs(nil),
-		layout:       parseLayout(header),
-		columns:      NewColumns(header),
+		fgbFeature: fgbFeature,
+		features:   features,
 	}
 
 	return &feature
@@ -28,7 +22,7 @@ func NewFeature(fgbFeature *FlatGeobuf.Feature, header *FlatGeobuf.Header) *Feat
 
 func (f *Feature) Geometry() (geom.T, error) {
 	geometry := f.fgbFeature.Geometry(nil)
-	geometryType := f.geometryType
+	geometryType := f.features.GeometryType()
 	if geometryType == FlatGeobuf.GeometryTypeUnknown {
 		geometryType = geometry.Type()
 	}
@@ -36,20 +30,22 @@ func (f *Feature) Geometry() (geom.T, error) {
 	var newGeom geom.T
 	var err error
 
+	layout := f.features.Layout()
 	if geometry.PartsLength() > 0 {
-		newGeom, err = parseMultiGeometry(geometry, f.layout, geometryType)
+		newGeom, err = parseMultiGeometry(geometry, layout, geometryType)
 	} else {
-		newGeom, err = parseSimpleGeometry(geometry, f.layout, geometryType)
+		newGeom, err = parseSimpleGeometry(geometry, layout, geometryType)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse geometry: %w", err)
 	}
 
-	if f.crs == nil {
+	crs := f.features.Crs()
+	if crs == 0 {
 		return newGeom, nil
 	}
 
-	sridGeom, err := geom.SetSRID(newGeom, int(f.crs.Code()))
+	sridGeom, err := geom.SetSRID(newGeom, crs)
 	if err != nil {
 		return nil, fmt.Errorf("unable to set SRID: %w", err)
 	}
@@ -58,8 +54,7 @@ func (f *Feature) Geometry() (geom.T, error) {
 }
 
 func (f *Feature) Properties() map[string]interface{} {
-	propertyDecoder := NewPropertyDecoder(f.columns)
-	props := propertyDecoder.Decode(f.fgbFeature.PropertiesBytes())
+	props := f.features.propertyDecoder.Decode(f.fgbFeature.PropertiesBytes())
 
 	return props
 }
