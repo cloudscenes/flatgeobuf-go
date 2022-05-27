@@ -5,6 +5,7 @@ import (
 	"flag"
 	flatgeobuf_go "flatgeobuf-go"
 	"fmt"
+	"github.com/twpayne/go-geom/encoding/wkt"
 	"log"
 	"os"
 	"runtime/pprof"
@@ -53,6 +54,7 @@ func main() {
 		fmt.Print(features.Summary())
 	}
 
+	fId := 0
 	for features.Next() {
 		feature := features.Read()
 
@@ -60,10 +62,17 @@ func main() {
 			continue
 		}
 
+		props := feature.Properties()
 		geom, _ := feature.Geometry()
 
-		if geom == nil {
-			continue
+		fmt.Printf("Feature:%d\n", fId)
+		for name, value := range props {
+			fmt.Printf("  %s = %v \n", name, value)
 		}
+
+		geomWkt, _ := wkt.Marshal(geom)
+		fmt.Printf("  %s \n", geomWkt)
+		fmt.Printf("\n")
+		fId++
 	}
 }
