@@ -25,8 +25,11 @@ func (pd *PropertyDecoder) Decode(b []byte) map[string]interface{} {
 	res := make(map[string]interface{})
 
 	pos := uint16(0)
-	for _, v := range pd.c.ids {
+	for pos < uint16(len(b)) {
+		id := flatbuffers.GetUint16(b[pos:])
 		pos += 2
+
+		v := pd.c.ids[id]
 
 		val, size := pd.decodeVal(b[pos:], v)
 
