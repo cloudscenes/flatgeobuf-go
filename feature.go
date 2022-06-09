@@ -74,8 +74,9 @@ func (f *Feature) Unmarshal(v interface{}) error {
 		field := rt.Field(i)
 
 		target := field.Name
-		if field.Tag != "" {
-			target = field.Tag.Get("fgb")
+		tag := field.Tag.Get("fgb")
+		if tag != "" {
+			target = tag
 		}
 
 		value, exists := props[target]
