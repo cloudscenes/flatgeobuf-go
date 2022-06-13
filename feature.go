@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/twpayne/go-geom"
 	"reflect"
+	"strings"
 )
 
 type Feature struct {
@@ -79,6 +80,7 @@ func (f *Feature) Unmarshal(v interface{}) error {
 			target = tag
 		}
 
+		target = strings.ToLower(target)
 		value, exists := props[target]
 		if !exists {
 			continue
