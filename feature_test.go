@@ -23,6 +23,7 @@ func TestUnmarshal(t *testing.T) {
 
 	type OutStruct struct {
 		Geom     geom.T
+		GeomCopy *geom.Point `fgb:"geom"`
 		Binary   []uint8
 		Boolean  bool `fgb:"bool"`
 		Byte     int8
@@ -50,6 +51,7 @@ func TestUnmarshal(t *testing.T) {
 			props: props,
 			want: &OutStruct{
 				Geom:     geom.NewPointFlat(geom.XY, []float64{0, 0}),
+				GeomCopy: geom.NewPointFlat(geom.XY, []float64{0, 0}),
 				Binary:   []uint8{0x58},
 				Boolean:  true,
 				Byte:     int8(-1),
