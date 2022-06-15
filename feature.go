@@ -68,11 +68,16 @@ func (f *Feature) Unmarshal(v interface{}) error {
 		return fmt.Errorf("cannot unmarshal")
 	}
 
+	// TODO: handle error
+	geometry, _ := f.Geometry()
 	props := f.Properties()
 
 	rt := rv.Elem().Type()
+	gt := reflect.TypeOf(geometry)
 	for i := 0; i < rt.NumField(); i++ {
 		field := rt.Field(i)
+		fieldType := field.Type
+		fieldKind := fieldType.Kind()
 
 		target := field.Name
 		tag := field.Tag.Get("fgb")
@@ -81,6 +86,27 @@ func (f *Feature) Unmarshal(v interface{}) error {
 		}
 
 		target = strings.ToLower(target)
+
+		if target == "geom" {
+			var geomInterface geom.T
+
+			if fieldKind != reflect.Ptr && fieldType != reflect.TypeOf(&geomInterface).Elem() {
+				panic("cannot unmarshall geometry to a struct field that isn't a pointer or a geom.T interface!")
+			}
+
+			if fieldKind == reflect.Ptr && !(fieldType.Elem() == gt.Elem()) {
+				panic("cannot unmarshal " + gt.Elem().Name() + " into Go struct field " + rt.Name() + "." + field.Name + " of type " + field.Type.Elem().Name())
+			}
+
+			if fieldKind == reflect.Interface && !gt.Implements(fieldType) {
+				panic("cannot unmarshal " + gt.Elem().Name() + " into Go struct field " + rt.Name() + "." + field.Name + " of type " + field.Type.Name())
+			}
+
+			rv.Elem().Field(i).Set(reflect.ValueOf(geometry))
+
+			continue
+		}
+
 		value, exists := props[target]
 		if !exists {
 			continue

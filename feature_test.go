@@ -1,6 +1,7 @@
 package flatgeobuf_go
 
 import (
+	"github.com/twpayne/go-geom"
 	"log"
 	"os"
 	"reflect"
@@ -21,6 +22,7 @@ func TestUnmarshal(t *testing.T) {
 	props := feature.Properties()
 
 	type OutStruct struct {
+		Geom     geom.T
 		Binary   []uint8
 		Boolean  bool `fgb:"bool"`
 		Byte     int8
@@ -47,6 +49,7 @@ func TestUnmarshal(t *testing.T) {
 			name:  "alldatatypes",
 			props: props,
 			want: &OutStruct{
+				Geom:     geom.NewPointFlat(geom.XY, []float64{0, 0}),
 				Binary:   []uint8{0x58},
 				Boolean:  true,
 				Byte:     int8(-1),
