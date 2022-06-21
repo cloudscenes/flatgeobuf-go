@@ -88,9 +88,7 @@ func (f *Feature) Unmarshal(v interface{}) error {
 		target = strings.ToLower(target)
 
 		if target == "geom" {
-			var geomInterface geom.T
-
-			if fieldKind != reflect.Ptr && fieldType != reflect.TypeOf(&geomInterface).Elem() {
+			if fieldKind != reflect.Ptr && fieldType != reflect.TypeOf((*geom.T)(nil)).Elem() {
 				panic("cannot unmarshall geometry to a struct field that isn't a pointer or a geom.T interface!")
 			}
 
