@@ -88,11 +88,12 @@ func (f *Feature) Unmarshal(v interface{}) error {
 		target = strings.ToLower(target)
 
 		if target == "geom" {
+			// only accept values that are geom.T
 			if fieldKind != reflect.Ptr && fieldType != reflect.TypeOf((*geom.T)(nil)).Elem() {
 				panic("cannot unmarshall geometry to a struct field that isn't a pointer or a geom.T interface!")
 			}
 
-			// this ensures that we don't try to store a Point in a Linestring var, for example
+			// don't try to match different types (e.g. store a Point in a Linestring var)
 			if fieldKind == reflect.Ptr && fieldType.Elem() != gt.Elem() {
 				panic("cannot unmarshal " + gt.Elem().Name() + " into Go struct field " + rt.Name() + "." + field.Name + " of type " + field.Type.Elem().Name())
 			}
