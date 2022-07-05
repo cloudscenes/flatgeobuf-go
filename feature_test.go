@@ -17,8 +17,7 @@ func TestUnmarshal(t *testing.T) {
 	fgb, err := NewFGB(f)
 
 	features := fgb.Features()
-	features.Next()
-	feature := features.Read()
+	feature, _ := features.Read()
 	props := feature.Properties()
 
 	type OutStruct struct {

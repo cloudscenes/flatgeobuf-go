@@ -30,8 +30,7 @@ func featuresToMap(path string) map[string]string {
 
 	featuresMap := make(map[string]string)
 
-	for features.Next() {
-		feature := features.Read()
+	for feature, err := features.Read(); feature != nil && err == nil; feature, err = features.Read() {
 		props := feature.Properties()
 		geometry, err := feature.Geometry()
 		if err != nil {
@@ -141,8 +140,8 @@ func TestUnsupportedGeometries(t *testing.T) {
 			fgb := readFile(tt.file)
 			features := fgb.Features()
 
-			for features.Next() {
-				got, err := features.Read().Geometry()
+			for feature, err := features.Read(); feature != nil && err != nil; feature, err = features.Read() {
+				got, err := feature.Geometry()
 
 				// TODO: create custom error to avoid weird handling
 				if got != tt.want || !strings.HasPrefix(err.Error(), "unable to parse geometry: unsupported geometry type") {

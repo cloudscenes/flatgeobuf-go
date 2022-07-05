@@ -56,9 +56,7 @@ func searchFGB(file string, box []float64) ([]geom.T, []geom.T, error) {
 
 	seqGeoms := make([]geom.T, 0)
 	filterBounds := geom.NewBounds(geom.XY).Set(box...)
-	for features.Next() {
-		feature := features.Read()
-
+	for feature, err := features.Read(); feature != nil && err != nil; feature, err = features.Read() {
 		g, err := feature.Geometry()
 		if err != nil {
 			log.Fatal(err)

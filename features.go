@@ -3,6 +3,7 @@ package flatgeobuf_go
 import (
 	"encoding/binary"
 	"flatgeobuf-go/FlatGeobuf"
+	"fmt"
 	"github.com/twpayne/go-geom"
 	"io"
 	"log"
@@ -11,7 +12,6 @@ import (
 type Features struct {
 	header          *FlatGeobuf.Header
 	r               io.Reader
-	fLen            uint32
 	propertyDecoder *PropertyDecoder
 }
 
@@ -22,7 +22,6 @@ func NewFeatures(r io.Reader, header *FlatGeobuf.Header) *Features {
 	return &Features{
 		header:          header,
 		r:               r,
-		fLen:            0,
 		propertyDecoder: propertyDecoder,
 	}
 }
@@ -36,21 +35,17 @@ func (fs *Features) featureLen() (uint32, error) {
 	return binary.LittleEndian.Uint32(b), nil
 }
 
-func (fs *Features) Next() bool {
+func (fs *Features) Read() (*Feature, error) {
 	fLen, err := fs.featureLen()
+
 	if err == io.EOF {
-		return false
+		return nil, fmt.Errorf("EOF")
 	} else if err != nil {
 		log.Fatalf("unexpected error reading feature %v", err)
-		return false
+		return nil, err
 	}
 
-	fs.fLen = fLen
-	return true
-}
-
-func (fs *Features) Read() *Feature {
-	b := make([]byte, fs.fLen)
+	b := make([]byte, fLen)
 	// TODO: handle errors
 	io.ReadFull(fs.r, b)
 
@@ -58,7 +53,7 @@ func (fs *Features) Read() *Feature {
 
 	feature := NewFeature(fgbFeature, fs)
 
-	return feature
+	return feature, nil
 }
 
 func (fs *Features) ReadAt(pos uint32) *FlatGeobuf.Feature {

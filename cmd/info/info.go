@@ -51,9 +51,7 @@ func main() {
 	}
 
 	features := fgb.Features()
-	for features.Next() {
-		feature := features.Read()
-
+	for feature, err := features.Read(); feature != nil && err != nil; feature, err = features.Read() {
 		geom, _ := feature.Geometry()
 
 		if geom == nil {
