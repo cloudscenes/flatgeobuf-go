@@ -19,8 +19,7 @@ func TestPropertyDecoder_Decode(t *testing.T) {
 	columns := NewColumns(header)
 
 	features := fgb.Features()
-	features.Next()
-	feature := features.Read()
+	feature, _ := features.Read()
 	props := feature.Properties()
 
 	tests := []struct {
