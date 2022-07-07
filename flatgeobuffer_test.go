@@ -73,6 +73,8 @@ func searchFGB(file string, box []float64) ([]geom.T, []geom.T, error) {
 }
 
 func Test_Search(t *testing.T) {
+	t.Skip()
+
 	tests := []struct {
 		name      string
 		file      string
