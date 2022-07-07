@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/encoding/wkt"
+	"io"
 	"log"
 	"os"
 	"reflect"
@@ -30,7 +31,15 @@ func featuresToMap(path string) map[string]string {
 
 	featuresMap := make(map[string]string)
 
-	for feature, err := features.Read(); feature != nil && err == nil; feature, err = features.Read() {
+	for {
+		feature, err := features.Read()
+
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			log.Fatal(err)
+		}
+
 		props := feature.Properties()
 		geometry, err := feature.Geometry()
 		if err != nil {
@@ -140,7 +149,15 @@ func TestUnsupportedGeometries(t *testing.T) {
 			fgb := readFile(tt.file)
 			features := fgb.Features()
 
-			for feature, err := features.Read(); feature != nil && err != nil; feature, err = features.Read() {
+			for {
+				feature, err := features.Read()
+
+				if err == io.EOF {
+					break
+				} else if err != nil {
+					log.Fatal(err)
+				}
+
 				got, err := feature.Geometry()
 
 				// TODO: create custom error to avoid weird handling
