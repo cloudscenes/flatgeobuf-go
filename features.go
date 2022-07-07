@@ -3,7 +3,6 @@ package flatgeobuf_go
 import (
 	"encoding/binary"
 	"flatgeobuf-go/FlatGeobuf"
-	"fmt"
 	"github.com/twpayne/go-geom"
 	"io"
 	"log"
@@ -39,7 +38,7 @@ func (fs *Features) Read() (*Feature, error) {
 	fLen, err := fs.featureLen()
 
 	if err == io.EOF {
-		return nil, fmt.Errorf("EOF")
+		return nil, err
 	} else if err != nil {
 		log.Fatalf("unexpected error reading feature %v", err)
 		return nil, err
