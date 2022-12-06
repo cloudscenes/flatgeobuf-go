@@ -30,17 +30,17 @@ func (pd *PropertyDecoder) Decode(b []byte) map[string]interface{} {
 
 		val, size := pd.decodeVal(b[pos:], v)
 
-		res[string(v.Name())] = val
+		res[v.Name] = val
 		pos += size
 	}
 
 	return res
 }
 
-func (pd *PropertyDecoder) decodeVal(b []byte, v *FlatGeobuf.Column) (interface{}, uint16) {
+func (pd *PropertyDecoder) decodeVal(b []byte, v *FlatGeobuf.ColumnT) (interface{}, uint16) {
 	var val interface{}
 	var size uint16
-	switch v.Type() {
+	switch v.Type {
 	case FlatGeobuf.ColumnTypeByte:
 		val = int8(b[0])
 		size = 1

@@ -9,12 +9,12 @@ import (
 )
 
 type Features struct {
-	header          *FlatGeobuf.Header
+	header          *FlatGeobuf.HeaderT
 	r               io.Reader
 	propertyDecoder *PropertyDecoder
 }
 
-func NewFeatures(r io.Reader, header *FlatGeobuf.Header) *Features {
+func NewFeatures(r io.Reader, header *FlatGeobuf.HeaderT) *Features {
 	columns := NewColumns(header)
 	propertyDecoder := NewPropertyDecoder(columns)
 
@@ -48,14 +48,14 @@ func (fs *Features) Read() (*Feature, error) {
 	// TODO: handle errors
 	io.ReadFull(fs.r, b)
 
-	fgbFeature := FlatGeobuf.GetRootAsFeature(b, 0)
+	fgbFeature := FlatGeobuf.GetRootAsFeature(b, 0).UnPack()
 
 	feature := NewFeature(fgbFeature, fs)
 
 	return feature, nil
 }
 
-func (fs *Features) ReadAt(pos uint32) *FlatGeobuf.Feature {
+func (fs *Features) ReadAt(pos uint32) *FlatGeobuf.FeatureT {
 	//TODO: this cannot be implemented with a simple reader
 	return nil
 	//return FlatGeobuf.GetSizePrefixedRootAsFeature(fs.b, flatbuffers.UOffsetT(pos))
@@ -64,13 +64,13 @@ func (fs *Features) ReadAt(pos uint32) *FlatGeobuf.Feature {
 // TODO: check if header crs is never nil and defaults to 0 -> uknown as header.fbs
 // 		 also check if 0 is an acceptable value for go geom srid
 func (fs *Features) Crs() int {
-	crs := fs.header.Crs(nil)
+	crs := fs.header.Crs
 
 	if crs == nil {
 		return 0
 	}
 
-	return int(crs.Code())
+	return int(crs.Code)
 }
 
 func (fs *Features) Layout() geom.Layout {
@@ -78,5 +78,5 @@ func (fs *Features) Layout() geom.Layout {
 }
 
 func (fs *Features) GeometryType() FlatGeobuf.GeometryType {
-	return fs.header.GeometryType()
+	return fs.header.GeometryType
 }

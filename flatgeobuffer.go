@@ -37,7 +37,7 @@ func Version(fileMagicBytes []byte) (string, error) {
 }
 
 type FGBReader struct {
-	header   *FlatGeobuf.Header
+	header   *FlatGeobuf.HeaderT
 	features *Features
 	prt      *index.PackedRTree
 }
@@ -60,18 +60,18 @@ func NewFGB(r io.Reader) (*FGBReader, error) {
 	}
 
 	var indexLength uint64
-	header := FlatGeobuf.GetRootAsHeader(buffer, 0)
+	header := FlatGeobuf.GetRootAsHeader(buffer, 0).UnPack()
 	fgb.header = header
 
-	if header.IndexNodeSize() != 0 {
-		indexLength, err = index.CalcTreeSize(header.FeaturesCount(), header.IndexNodeSize())
+	if header.IndexNodeSize != 0 {
+		indexLength, err = index.CalcTreeSize(header.FeaturesCount, header.IndexNodeSize)
 		buffer = make([]byte, indexLength)
 		n, err = io.ReadFull(r, buffer)
 		if err != nil || n < int(indexLength) {
 			return nil, fmt.Errorf("could not read index: %w", err)
 		}
 
-		prt, err := index.ReadPackedRTreeBytes(header.FeaturesCount(), header.IndexNodeSize(), buffer)
+		prt, err := index.ReadPackedRTreeBytes(header.FeaturesCount, header.IndexNodeSize, buffer)
 		if err != nil {
 			return nil, fmt.Errorf("could not read index: %w", err)
 		}
@@ -83,7 +83,7 @@ func NewFGB(r io.Reader) (*FGBReader, error) {
 	return &fgb, nil
 }
 
-func (fgb *FGBReader) Header() *FlatGeobuf.Header {
+func (fgb *FGBReader) Header() *FlatGeobuf.HeaderT {
 	return fgb.header
 }
 

@@ -7,22 +7,18 @@ import (
 )
 
 type Columns struct {
-	names map[string]*FlatGeobuf.Column
-	ids   []*FlatGeobuf.Column
+	names map[string]*FlatGeobuf.ColumnT
+	ids   []*FlatGeobuf.ColumnT
 }
 
-func NewColumns(header *FlatGeobuf.Header) *Columns {
+func NewColumns(header *FlatGeobuf.HeaderT) *Columns {
+	names := make(map[string]*FlatGeobuf.ColumnT)
+	ids := make([]*FlatGeobuf.ColumnT, len(header.Columns))
 
-	names := make(map[string]*FlatGeobuf.Column)
-	colLen := header.ColumnsLength()
-	ids := make([]*FlatGeobuf.Column, colLen)
-
-	for i := 0; i < colLen; i++ {
-		var c FlatGeobuf.Column
-		header.Columns(&c, i)
-		name := string(c.Name())
-		names[name] = &c
-		ids[i] = &c
+	for i, column := range header.Columns {
+		name := column.Name
+		names[name] = column
+		ids[i] = column
 	}
 
 	return &Columns{
@@ -35,13 +31,13 @@ func (cols *Columns) String() string {
 	var b strings.Builder
 
 	for i, v := range cols.ids {
-		b.WriteString(fmt.Sprintf("%d: %s\n", i, string(v.Name())))
+		b.WriteString(fmt.Sprintf("%d: %s\n", i, string(v.Name)))
 	}
 
 	for k, v := range cols.names {
 		b.WriteString(k)
 		b.WriteString(" : ")
-		b.WriteString(v.Type().String())
+		b.WriteString(v.Type.String())
 		b.WriteString("\n")
 	}
 

@@ -6,17 +6,17 @@ import (
 	"github.com/twpayne/go-geom"
 )
 
-func parseSimpleGeometry(geometry *FlatGeobuf.Geometry, layout geom.Layout, geomType FlatGeobuf.GeometryType) (geom.T, error) {
-	coords := make([]float64, 0, geometry.XyLength()/2*layout.Stride())
-	geomLen := geometry.XyLength() / 2
+func parseSimpleGeometry(geometry *FlatGeobuf.GeometryT, layout geom.Layout, geomType FlatGeobuf.GeometryType) (geom.T, error) {
+	geomLen := len(geometry.Xy) / 2
+	coords := make([]float64, 0, geomLen*layout.Stride())
 	for i := 0; i < geomLen; i += 1 {
-		coords = append(coords, geometry.Xy(i*2), geometry.Xy(i*2+1))
+		coords = append(coords, geometry.Xy[i*2], geometry.Xy[i*2+1])
 
 		if layout == geom.XYZ || layout == geom.XYZM {
-			coords = append(coords, geometry.Z(i))
+			coords = append(coords, geometry.Z[i])
 		}
 		if layout == geom.XYM || layout == geom.XYZM {
-			coords = append(coords, geometry.M(i))
+			coords = append(coords, geometry.M[i])
 		}
 	}
 
@@ -43,7 +43,7 @@ func parseSimpleGeometry(geometry *FlatGeobuf.Geometry, layout geom.Layout, geom
 	return newGeom, nil
 }
 
-func parseMultiGeometry(geometry *FlatGeobuf.Geometry, layout geom.Layout, geomType FlatGeobuf.GeometryType) (geom.T, error) {
+func parseMultiGeometry(geometry *FlatGeobuf.GeometryT, layout geom.Layout, geomType FlatGeobuf.GeometryType) (geom.T, error) {
 	var newGeom geom.T
 	var addToCollection func(createdGeom geom.T) error
 
@@ -81,11 +81,8 @@ func parseMultiGeometry(geometry *FlatGeobuf.Geometry, layout geom.Layout, geomT
 		return nil, fmt.Errorf("unsupported geometry type %s", geomType)
 	}
 
-	for i := 0; i < geometry.PartsLength(); i++ {
-		partGeom := FlatGeobuf.Geometry{}
-		geometry.Parts(&partGeom, i)
-
-		createdGeom, err := parseSimpleGeometry(&partGeom, layout, partGeom.Type())
+	for _, geomPart := range geometry.Parts {
+		createdGeom, err := parseSimpleGeometry(geomPart, layout, geomPart.Type)
 		if err != nil {
 			return nil, err
 		}
@@ -99,23 +96,24 @@ func parseMultiGeometry(geometry *FlatGeobuf.Geometry, layout geom.Layout, geomT
 	return newGeom, nil
 }
 
-func getEnds(geometry *FlatGeobuf.Geometry, stride int) []int {
-	ends := make([]int, geometry.EndsLength())
-	for i := 0; i < geometry.EndsLength(); i++ {
+func getEnds(geometry *FlatGeobuf.GeometryT, stride int) []int {
+	ends := make([]int, len(geometry.Ends))
+
+	for i, end := range geometry.Ends {
 		// in flatgeobuf ends is based on stride, in go-geom it's index based
-		ends[i] = int(geometry.Ends(i)) * stride
+		ends[i] = int(end) * stride
 	}
 
 	return ends
 }
 
-func parseLayout(header *FlatGeobuf.Header) geom.Layout {
+func parseLayout(header *FlatGeobuf.HeaderT) geom.Layout {
 	layout := geom.XY
-	if header.HasZ() && header.HasM() {
+	if header.HasZ && header.HasM {
 		layout = geom.XYZM
-	} else if header.HasZ() {
+	} else if header.HasZ {
 		layout = geom.XYZ
-	} else if header.HasM() {
+	} else if header.HasM {
 		layout = geom.XYM
 	}
 	return layout
