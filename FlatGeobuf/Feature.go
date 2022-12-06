@@ -6,6 +6,58 @@ import (
 	flatbuffers "github.com/google/flatbuffers/go"
 )
 
+type FeatureT struct {
+	Geometry *GeometryT
+	Properties []byte
+	Columns []*ColumnT
+}
+
+func (t *FeatureT) Pack(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
+	if t == nil { return 0 }
+	geometryOffset := t.Geometry.Pack(builder)
+	propertiesOffset := flatbuffers.UOffsetT(0)
+	if t.Properties != nil {
+		propertiesOffset = builder.CreateByteString(t.Properties)
+	}
+	columnsOffset := flatbuffers.UOffsetT(0)
+	if t.Columns != nil {
+		columnsLength := len(t.Columns)
+		columnsOffsets := make([]flatbuffers.UOffsetT, columnsLength)
+		for j := 0; j < columnsLength; j++ {
+			columnsOffsets[j] = t.Columns[j].Pack(builder)
+		}
+		FeatureStartColumnsVector(builder, columnsLength)
+		for j := columnsLength - 1; j >= 0; j-- {
+			builder.PrependUOffsetT(columnsOffsets[j])
+		}
+		columnsOffset = builder.EndVector(columnsLength)
+	}
+	FeatureStart(builder)
+	FeatureAddGeometry(builder, geometryOffset)
+	FeatureAddProperties(builder, propertiesOffset)
+	FeatureAddColumns(builder, columnsOffset)
+	return FeatureEnd(builder)
+}
+
+func (rcv *Feature) UnPackTo(t *FeatureT) {
+	t.Geometry = rcv.Geometry(nil).UnPack()
+	t.Properties = rcv.PropertiesBytes()
+	columnsLength := rcv.ColumnsLength()
+	t.Columns = make([]*ColumnT, columnsLength)
+	for j := 0; j < columnsLength; j++ {
+		x := Column{}
+		rcv.Columns(&x, j)
+		t.Columns[j] = x.UnPack()
+	}
+}
+
+func (rcv *Feature) UnPack() *FeatureT {
+	if rcv == nil { return nil }
+	t := &FeatureT{}
+	rcv.UnPackTo(t)
+	return t
+}
+
 type Feature struct {
 	_tab flatbuffers.Table
 }
@@ -14,13 +66,6 @@ func GetRootAsFeature(buf []byte, offset flatbuffers.UOffsetT) *Feature {
 	n := flatbuffers.GetUOffsetT(buf[offset:])
 	x := &Feature{}
 	x.Init(buf, n+offset)
-	return x
-}
-
-func GetSizePrefixedRootAsFeature(buf []byte, offset flatbuffers.UOffsetT) *Feature {
-	n := flatbuffers.GetUOffsetT(buf[offset+flatbuffers.SizeUint32:])
-	x := &Feature{}
-	x.Init(buf, n+offset+flatbuffers.SizeUint32)
 	return x
 }
 

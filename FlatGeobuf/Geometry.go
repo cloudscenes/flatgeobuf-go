@@ -6,6 +6,146 @@ import (
 	flatbuffers "github.com/google/flatbuffers/go"
 )
 
+type GeometryT struct {
+	Ends []uint32
+	Xy []float64
+	Z []float64
+	M []float64
+	T []float64
+	Tm []uint64
+	Type GeometryType
+	Parts []*GeometryT
+}
+
+func (t *GeometryT) Pack(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
+	if t == nil { return 0 }
+	endsOffset := flatbuffers.UOffsetT(0)
+	if t.Ends != nil {
+		endsLength := len(t.Ends)
+		GeometryStartEndsVector(builder, endsLength)
+		for j := endsLength - 1; j >= 0; j-- {
+			builder.PrependUint32(t.Ends[j])
+		}
+		endsOffset = builder.EndVector(endsLength)
+	}
+	xyOffset := flatbuffers.UOffsetT(0)
+	if t.Xy != nil {
+		xyLength := len(t.Xy)
+		GeometryStartXyVector(builder, xyLength)
+		for j := xyLength - 1; j >= 0; j-- {
+			builder.PrependFloat64(t.Xy[j])
+		}
+		xyOffset = builder.EndVector(xyLength)
+	}
+	zOffset := flatbuffers.UOffsetT(0)
+	if t.Z != nil {
+		zLength := len(t.Z)
+		GeometryStartZVector(builder, zLength)
+		for j := zLength - 1; j >= 0; j-- {
+			builder.PrependFloat64(t.Z[j])
+		}
+		zOffset = builder.EndVector(zLength)
+	}
+	mOffset := flatbuffers.UOffsetT(0)
+	if t.M != nil {
+		mLength := len(t.M)
+		GeometryStartMVector(builder, mLength)
+		for j := mLength - 1; j >= 0; j-- {
+			builder.PrependFloat64(t.M[j])
+		}
+		mOffset = builder.EndVector(mLength)
+	}
+	tOffset := flatbuffers.UOffsetT(0)
+	if t.T != nil {
+		tLength := len(t.T)
+		GeometryStartTVector(builder, tLength)
+		for j := tLength - 1; j >= 0; j-- {
+			builder.PrependFloat64(t.T[j])
+		}
+		tOffset = builder.EndVector(tLength)
+	}
+	tmOffset := flatbuffers.UOffsetT(0)
+	if t.Tm != nil {
+		tmLength := len(t.Tm)
+		GeometryStartTmVector(builder, tmLength)
+		for j := tmLength - 1; j >= 0; j-- {
+			builder.PrependUint64(t.Tm[j])
+		}
+		tmOffset = builder.EndVector(tmLength)
+	}
+	partsOffset := flatbuffers.UOffsetT(0)
+	if t.Parts != nil {
+		partsLength := len(t.Parts)
+		partsOffsets := make([]flatbuffers.UOffsetT, partsLength)
+		for j := 0; j < partsLength; j++ {
+			partsOffsets[j] = t.Parts[j].Pack(builder)
+		}
+		GeometryStartPartsVector(builder, partsLength)
+		for j := partsLength - 1; j >= 0; j-- {
+			builder.PrependUOffsetT(partsOffsets[j])
+		}
+		partsOffset = builder.EndVector(partsLength)
+	}
+	GeometryStart(builder)
+	GeometryAddEnds(builder, endsOffset)
+	GeometryAddXy(builder, xyOffset)
+	GeometryAddZ(builder, zOffset)
+	GeometryAddM(builder, mOffset)
+	GeometryAddT(builder, tOffset)
+	GeometryAddTm(builder, tmOffset)
+	GeometryAddType(builder, t.Type)
+	GeometryAddParts(builder, partsOffset)
+	return GeometryEnd(builder)
+}
+
+func (rcv *Geometry) UnPackTo(t *GeometryT) {
+	endsLength := rcv.EndsLength()
+	t.Ends = make([]uint32, endsLength)
+	for j := 0; j < endsLength; j++ {
+		t.Ends[j] = rcv.Ends(j)
+	}
+	xyLength := rcv.XyLength()
+	t.Xy = make([]float64, xyLength)
+	for j := 0; j < xyLength; j++ {
+		t.Xy[j] = rcv.Xy(j)
+	}
+	zLength := rcv.ZLength()
+	t.Z = make([]float64, zLength)
+	for j := 0; j < zLength; j++ {
+		t.Z[j] = rcv.Z(j)
+	}
+	mLength := rcv.MLength()
+	t.M = make([]float64, mLength)
+	for j := 0; j < mLength; j++ {
+		t.M[j] = rcv.M(j)
+	}
+	tLength := rcv.TLength()
+	t.T = make([]float64, tLength)
+	for j := 0; j < tLength; j++ {
+		t.T[j] = rcv.T(j)
+	}
+	tmLength := rcv.TmLength()
+	t.Tm = make([]uint64, tmLength)
+	for j := 0; j < tmLength; j++ {
+		t.Tm[j] = rcv.Tm(j)
+	}
+	t.Type = rcv.Type()
+	partsLength := rcv.PartsLength()
+	t.Parts = make([]*GeometryT, partsLength)
+	for j := 0; j < partsLength; j++ {
+		x := Geometry{}
+		rcv.Parts(&x, j)
+		t.Parts[j] = x.UnPack()
+	}
+}
+
+func (rcv *Geometry) UnPack() *GeometryT {
+	if rcv == nil { return nil }
+	t := &GeometryT{}
+	rcv.UnPackTo(t)
+	return t
+}
+
 type Geometry struct {
 	_tab flatbuffers.Table
 }
@@ -14,13 +154,6 @@ func GetRootAsGeometry(buf []byte, offset flatbuffers.UOffsetT) *Geometry {
 	n := flatbuffers.GetUOffsetT(buf[offset:])
 	x := &Geometry{}
 	x.Init(buf, n+offset)
-	return x
-}
-
-func GetSizePrefixedRootAsGeometry(buf []byte, offset flatbuffers.UOffsetT) *Geometry {
-	n := flatbuffers.GetUOffsetT(buf[offset+flatbuffers.SizeUint32:])
-	x := &Geometry{}
-	x.Init(buf, n+offset+flatbuffers.SizeUint32)
 	return x
 }
 
