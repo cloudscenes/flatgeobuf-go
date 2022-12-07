@@ -7,40 +7,36 @@ import (
 	"time"
 )
 
-// PropertyDecoder allows decoding of flatgeobuf properties
-// according to the columns in the header
-type PropertyDecoder struct {
-	c *Columns
-}
-
-func NewPropertyDecoder(c *Columns) *PropertyDecoder {
-	return &PropertyDecoder{c}
-}
-
-func (pd *PropertyDecoder) Decode(b []byte) map[string]interface{} {
-	if b == nil {
+func (f *Feature) decode() map[string]interface{} {
+	fgbFeature := f.FeatureT
+	if len(fgbFeature.Properties) == 0 {
 		return nil
 	}
 
 	res := make(map[string]interface{})
 
 	pos := uint16(0)
-	for _, v := range pd.c.ids {
+
+	columns := f.headerColumns
+	if len(columns) == 0 {
+		columns = fgbFeature.Columns
+	}
+
+	for _, col := range columns {
 		pos += 2
+		val, size := f.decodeVal(fgbFeature.Properties[pos:], col)
 
-		val, size := pd.decodeVal(b[pos:], v)
-
-		res[v.Name] = val
+		res[col.Name] = val
 		pos += size
 	}
 
 	return res
 }
 
-func (pd *PropertyDecoder) decodeVal(b []byte, v *FlatGeobuf.ColumnT) (interface{}, uint16) {
+func (f *Feature) decodeVal(b []byte, col *FlatGeobuf.ColumnT) (interface{}, uint16) {
 	var val interface{}
 	var size uint16
-	switch v.Type {
+	switch col.Type {
 	case FlatGeobuf.ColumnTypeByte:
 		val = int8(b[0])
 		size = 1

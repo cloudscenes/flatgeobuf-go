@@ -27,12 +27,10 @@ func readFile(path string) *FGBReader {
 
 func featuresToMap(path string) map[string]string {
 	fgb := readFile(path)
-	features := fgb.Features()
-
 	featuresMap := make(map[string]string)
 
 	for {
-		feature, err := features.Read()
+		feature, err := fgb.ReadFeature()
 
 		if err == io.EOF {
 			break
@@ -147,10 +145,9 @@ func TestUnsupportedGeometries(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fgb := readFile(tt.file)
-			features := fgb.Features()
 
 			for {
-				feature, err := features.Read()
+				feature, err := fgb.ReadFeature()
 
 				if err == io.EOF {
 					break

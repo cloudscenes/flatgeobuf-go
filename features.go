@@ -8,34 +8,17 @@ import (
 	"log"
 )
 
-type Features struct {
-	header          *FlatGeobuf.HeaderT
-	r               io.Reader
-	propertyDecoder *PropertyDecoder
-}
-
-func NewFeatures(r io.Reader, header *FlatGeobuf.HeaderT) *Features {
-	columns := NewColumns(header)
-	propertyDecoder := NewPropertyDecoder(columns)
-
-	return &Features{
-		header:          header,
-		r:               r,
-		propertyDecoder: propertyDecoder,
-	}
-}
-
-func (fs *Features) featureLen() (uint32, error) {
+func (fgb *FGBReader) featureLen() (uint32, error) {
 	b := make([]byte, 4)
-	_, err := fs.r.Read(b)
+	_, err := fgb.reader.Read(b)
 	if err != nil {
 		return 0, err
 	}
 	return binary.LittleEndian.Uint32(b), nil
 }
 
-func (fs *Features) Read() (*Feature, error) {
-	fLen, err := fs.featureLen()
+func (fgb *FGBReader) ReadFeature() (*Feature, error) {
+	fLen, err := fgb.featureLen()
 
 	if err == io.EOF {
 		return nil, err
@@ -46,16 +29,22 @@ func (fs *Features) Read() (*Feature, error) {
 
 	b := make([]byte, fLen)
 	// TODO: handle errors
-	io.ReadFull(fs.r, b)
+	io.ReadFull(fgb.reader, b)
 
 	fgbFeature := FlatGeobuf.GetRootAsFeature(b, 0).UnPack()
 
-	feature := NewFeature(fgbFeature, fs)
+	feature := &Feature{
+		FeatureT:           *fgbFeature,
+		crs:                fgb.Crs(),
+		layout:             fgb.Layout(),
+		headerGeometryType: fgb.GeometryType(),
+		headerColumns:      fgb.header.Columns,
+	}
 
 	return feature, nil
 }
 
-func (fs *Features) ReadAt(pos uint32) *FlatGeobuf.FeatureT {
+func (fgb *FGBReader) ReadFeatureAt(pos uint32) *FlatGeobuf.FeatureT {
 	//TODO: this cannot be implemented with a simple reader
 	return nil
 	//return FlatGeobuf.GetSizePrefixedRootAsFeature(fs.b, flatbuffers.UOffsetT(pos))
@@ -63,8 +52,8 @@ func (fs *Features) ReadAt(pos uint32) *FlatGeobuf.FeatureT {
 
 // TODO: check if header crs is never nil and defaults to 0 -> uknown as header.fbs
 // 		 also check if 0 is an acceptable value for go geom srid
-func (fs *Features) Crs() int {
-	crs := fs.header.Crs
+func (fgb *FGBReader) Crs() int {
+	crs := fgb.header.Crs
 
 	if crs == nil {
 		return 0
@@ -73,10 +62,10 @@ func (fs *Features) Crs() int {
 	return int(crs.Code)
 }
 
-func (fs *Features) Layout() geom.Layout {
-	return parseLayout(fs.header)
+func (fgb *FGBReader) Layout() geom.Layout {
+	return parseLayout(fgb.header)
 }
 
-func (fs *Features) GeometryType() FlatGeobuf.GeometryType {
-	return fs.header.GeometryType
+func (fgb *FGBReader) GeometryType() FlatGeobuf.GeometryType {
+	return fgb.header.GeometryType
 }

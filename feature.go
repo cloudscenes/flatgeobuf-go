@@ -9,22 +9,16 @@ import (
 )
 
 type Feature struct {
-	fgbFeature *FlatGeobuf.FeatureT
-	features   *Features
-}
-
-func NewFeature(fgbFeature *FlatGeobuf.FeatureT, features *Features) *Feature {
-	feature := Feature{
-		fgbFeature: fgbFeature,
-		features:   features,
-	}
-
-	return &feature
+	FlatGeobuf.FeatureT
+	crs                int
+	layout             geom.Layout
+	headerGeometryType FlatGeobuf.GeometryType
+	headerColumns      []*FlatGeobuf.ColumnT
 }
 
 func (f *Feature) Geometry() (geom.T, error) {
-	geometry := f.fgbFeature.Geometry
-	geometryType := f.features.GeometryType()
+	geometry := f.FeatureT.Geometry
+	geometryType := f.headerGeometryType
 	if geometryType == FlatGeobuf.GeometryTypeUnknown {
 		geometryType = geometry.Type
 	}
@@ -32,7 +26,7 @@ func (f *Feature) Geometry() (geom.T, error) {
 	var newGeom geom.T
 	var err error
 
-	layout := f.features.Layout()
+	layout := f.layout
 	if len(geometry.Parts) > 0 {
 		newGeom, err = parseMultiGeometry(geometry, layout, geometryType)
 	} else {
@@ -42,7 +36,7 @@ func (f *Feature) Geometry() (geom.T, error) {
 		return nil, fmt.Errorf("unable to parse geometry: %w", err)
 	}
 
-	crs := f.features.Crs()
+	crs := f.crs
 	if crs == 0 {
 		return newGeom, nil
 	}
@@ -56,7 +50,7 @@ func (f *Feature) Geometry() (geom.T, error) {
 }
 
 func (f *Feature) Properties() map[string]interface{} {
-	props := f.features.propertyDecoder.Decode(f.fgbFeature.Properties)
+	props := f.decode()
 
 	return props
 }
