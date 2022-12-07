@@ -6,6 +6,62 @@ import (
 	flatbuffers "github.com/google/flatbuffers/go"
 )
 
+type ColumnT struct {
+	Name string
+	Type ColumnType
+	Title string
+	Description string
+	Width int32
+	Precision int32
+	Scale int32
+	Nullable bool
+	Unique bool
+	PrimaryKey bool
+	Metadata string
+}
+
+func (t *ColumnT) Pack(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
+	if t == nil { return 0 }
+	nameOffset := builder.CreateString(t.Name)
+	titleOffset := builder.CreateString(t.Title)
+	descriptionOffset := builder.CreateString(t.Description)
+	metadataOffset := builder.CreateString(t.Metadata)
+	ColumnStart(builder)
+	ColumnAddName(builder, nameOffset)
+	ColumnAddType(builder, t.Type)
+	ColumnAddTitle(builder, titleOffset)
+	ColumnAddDescription(builder, descriptionOffset)
+	ColumnAddWidth(builder, t.Width)
+	ColumnAddPrecision(builder, t.Precision)
+	ColumnAddScale(builder, t.Scale)
+	ColumnAddNullable(builder, t.Nullable)
+	ColumnAddUnique(builder, t.Unique)
+	ColumnAddPrimaryKey(builder, t.PrimaryKey)
+	ColumnAddMetadata(builder, metadataOffset)
+	return ColumnEnd(builder)
+}
+
+func (rcv *Column) UnPackTo(t *ColumnT) {
+	t.Name = string(rcv.Name())
+	t.Type = rcv.Type()
+	t.Title = string(rcv.Title())
+	t.Description = string(rcv.Description())
+	t.Width = rcv.Width()
+	t.Precision = rcv.Precision()
+	t.Scale = rcv.Scale()
+	t.Nullable = rcv.Nullable()
+	t.Unique = rcv.Unique()
+	t.PrimaryKey = rcv.PrimaryKey()
+	t.Metadata = string(rcv.Metadata())
+}
+
+func (rcv *Column) UnPack() *ColumnT {
+	if rcv == nil { return nil }
+	t := &ColumnT{}
+	rcv.UnPackTo(t)
+	return t
+}
+
 type Column struct {
 	_tab flatbuffers.Table
 }
@@ -14,13 +70,6 @@ func GetRootAsColumn(buf []byte, offset flatbuffers.UOffsetT) *Column {
 	n := flatbuffers.GetUOffsetT(buf[offset:])
 	x := &Column{}
 	x.Init(buf, n+offset)
-	return x
-}
-
-func GetSizePrefixedRootAsColumn(buf []byte, offset flatbuffers.UOffsetT) *Column {
-	n := flatbuffers.GetUOffsetT(buf[offset+flatbuffers.SizeUint32:])
-	x := &Column{}
-	x.Init(buf, n+offset+flatbuffers.SizeUint32)
 	return x
 }
 

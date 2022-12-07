@@ -6,6 +6,104 @@ import (
 	flatbuffers "github.com/google/flatbuffers/go"
 )
 
+type HeaderT struct {
+	Name string
+	Envelope []float64
+	GeometryType GeometryType
+	HasZ bool
+	HasM bool
+	HasT bool
+	HasTm bool
+	Columns []*ColumnT
+	FeaturesCount uint64
+	IndexNodeSize uint16
+	Crs *CrsT
+	Title string
+	Description string
+	Metadata string
+}
+
+func (t *HeaderT) Pack(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
+	if t == nil { return 0 }
+	nameOffset := builder.CreateString(t.Name)
+	envelopeOffset := flatbuffers.UOffsetT(0)
+	if t.Envelope != nil {
+		envelopeLength := len(t.Envelope)
+		HeaderStartEnvelopeVector(builder, envelopeLength)
+		for j := envelopeLength - 1; j >= 0; j-- {
+			builder.PrependFloat64(t.Envelope[j])
+		}
+		envelopeOffset = builder.EndVector(envelopeLength)
+	}
+	columnsOffset := flatbuffers.UOffsetT(0)
+	if t.Columns != nil {
+		columnsLength := len(t.Columns)
+		columnsOffsets := make([]flatbuffers.UOffsetT, columnsLength)
+		for j := 0; j < columnsLength; j++ {
+			columnsOffsets[j] = t.Columns[j].Pack(builder)
+		}
+		HeaderStartColumnsVector(builder, columnsLength)
+		for j := columnsLength - 1; j >= 0; j-- {
+			builder.PrependUOffsetT(columnsOffsets[j])
+		}
+		columnsOffset = builder.EndVector(columnsLength)
+	}
+	crsOffset := t.Crs.Pack(builder)
+	titleOffset := builder.CreateString(t.Title)
+	descriptionOffset := builder.CreateString(t.Description)
+	metadataOffset := builder.CreateString(t.Metadata)
+	HeaderStart(builder)
+	HeaderAddName(builder, nameOffset)
+	HeaderAddEnvelope(builder, envelopeOffset)
+	HeaderAddGeometryType(builder, t.GeometryType)
+	HeaderAddHasZ(builder, t.HasZ)
+	HeaderAddHasM(builder, t.HasM)
+	HeaderAddHasT(builder, t.HasT)
+	HeaderAddHasTm(builder, t.HasTm)
+	HeaderAddColumns(builder, columnsOffset)
+	HeaderAddFeaturesCount(builder, t.FeaturesCount)
+	HeaderAddIndexNodeSize(builder, t.IndexNodeSize)
+	HeaderAddCrs(builder, crsOffset)
+	HeaderAddTitle(builder, titleOffset)
+	HeaderAddDescription(builder, descriptionOffset)
+	HeaderAddMetadata(builder, metadataOffset)
+	return HeaderEnd(builder)
+}
+
+func (rcv *Header) UnPackTo(t *HeaderT) {
+	t.Name = string(rcv.Name())
+	envelopeLength := rcv.EnvelopeLength()
+	t.Envelope = make([]float64, envelopeLength)
+	for j := 0; j < envelopeLength; j++ {
+		t.Envelope[j] = rcv.Envelope(j)
+	}
+	t.GeometryType = rcv.GeometryType()
+	t.HasZ = rcv.HasZ()
+	t.HasM = rcv.HasM()
+	t.HasT = rcv.HasT()
+	t.HasTm = rcv.HasTm()
+	columnsLength := rcv.ColumnsLength()
+	t.Columns = make([]*ColumnT, columnsLength)
+	for j := 0; j < columnsLength; j++ {
+		x := Column{}
+		rcv.Columns(&x, j)
+		t.Columns[j] = x.UnPack()
+	}
+	t.FeaturesCount = rcv.FeaturesCount()
+	t.IndexNodeSize = rcv.IndexNodeSize()
+	t.Crs = rcv.Crs(nil).UnPack()
+	t.Title = string(rcv.Title())
+	t.Description = string(rcv.Description())
+	t.Metadata = string(rcv.Metadata())
+}
+
+func (rcv *Header) UnPack() *HeaderT {
+	if rcv == nil { return nil }
+	t := &HeaderT{}
+	rcv.UnPackTo(t)
+	return t
+}
+
 type Header struct {
 	_tab flatbuffers.Table
 }
@@ -14,13 +112,6 @@ func GetRootAsHeader(buf []byte, offset flatbuffers.UOffsetT) *Header {
 	n := flatbuffers.GetUOffsetT(buf[offset:])
 	x := &Header{}
 	x.Init(buf, n+offset)
-	return x
-}
-
-func GetSizePrefixedRootAsHeader(buf []byte, offset flatbuffers.UOffsetT) *Header {
-	n := flatbuffers.GetUOffsetT(buf[offset+flatbuffers.SizeUint32:])
-	x := &Header{}
-	x.Init(buf, n+offset+flatbuffers.SizeUint32)
 	return x
 }
 

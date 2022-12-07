@@ -6,6 +6,48 @@ import (
 	flatbuffers "github.com/google/flatbuffers/go"
 )
 
+type CrsT struct {
+	Org string
+	Code int32
+	Name string
+	Description string
+	Wkt string
+	CodeString string
+}
+
+func (t *CrsT) Pack(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
+	if t == nil { return 0 }
+	orgOffset := builder.CreateString(t.Org)
+	nameOffset := builder.CreateString(t.Name)
+	descriptionOffset := builder.CreateString(t.Description)
+	wktOffset := builder.CreateString(t.Wkt)
+	codeStringOffset := builder.CreateString(t.CodeString)
+	CrsStart(builder)
+	CrsAddOrg(builder, orgOffset)
+	CrsAddCode(builder, t.Code)
+	CrsAddName(builder, nameOffset)
+	CrsAddDescription(builder, descriptionOffset)
+	CrsAddWkt(builder, wktOffset)
+	CrsAddCodeString(builder, codeStringOffset)
+	return CrsEnd(builder)
+}
+
+func (rcv *Crs) UnPackTo(t *CrsT) {
+	t.Org = string(rcv.Org())
+	t.Code = rcv.Code()
+	t.Name = string(rcv.Name())
+	t.Description = string(rcv.Description())
+	t.Wkt = string(rcv.Wkt())
+	t.CodeString = string(rcv.CodeString())
+}
+
+func (rcv *Crs) UnPack() *CrsT {
+	if rcv == nil { return nil }
+	t := &CrsT{}
+	rcv.UnPackTo(t)
+	return t
+}
+
 type Crs struct {
 	_tab flatbuffers.Table
 }
@@ -14,13 +56,6 @@ func GetRootAsCrs(buf []byte, offset flatbuffers.UOffsetT) *Crs {
 	n := flatbuffers.GetUOffsetT(buf[offset:])
 	x := &Crs{}
 	x.Init(buf, n+offset)
-	return x
-}
-
-func GetSizePrefixedRootAsCrs(buf []byte, offset flatbuffers.UOffsetT) *Crs {
-	n := flatbuffers.GetUOffsetT(buf[offset+flatbuffers.SizeUint32:])
-	x := &Crs{}
-	x.Init(buf, n+offset+flatbuffers.SizeUint32)
 	return x
 }
 
