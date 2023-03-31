@@ -1,0 +1,7 @@
+{
+    "go.vetOnSave": "package",
+    "gopls": {
+        "formatting.gofumpt": true,
+    },
+    "go.useLanguageServer": true
+}
