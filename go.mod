@@ -1,8 +1,8 @@
 module flatgeobuf-go
 
-go 1.17
+go 1.20
 
 require (
-	github.com/google/flatbuffers v2.0.5+incompatible
-	github.com/twpayne/go-geom v1.4.1
+	github.com/google/flatbuffers v23.3.3+incompatible
+	github.com/twpayne/go-geom v1.5.2
 )
