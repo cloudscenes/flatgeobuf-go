@@ -37,9 +37,9 @@ func Version(fileMagicBytes []byte) (string, error) {
 }
 
 type FGBReader struct {
-	header   *FlatGeobuf.HeaderT
-	features *Features
-	prt      *index.PackedRTree
+	reader io.Reader
+	header *FlatGeobuf.HeaderT
+	prt    *index.PackedRTree
 }
 
 func NewFGB(r io.Reader) (*FGBReader, error) {
@@ -78,17 +78,13 @@ func NewFGB(r io.Reader) (*FGBReader, error) {
 		fgb.prt = prt
 	}
 
-	fgb.features = NewFeatures(r, fgb.Header())
+	fgb.reader = r
 
 	return &fgb, nil
 }
 
 func (fgb *FGBReader) Header() *FlatGeobuf.HeaderT {
 	return fgb.header
-}
-
-func (fgb *FGBReader) Features() *Features {
-	return fgb.features
 }
 
 func (fgb *FGBReader) Index() *index.PackedRTree {

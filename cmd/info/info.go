@@ -51,9 +51,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	features := fgb.Features()
 	for {
-		feature, err := features.Read()
+		feature, err := fgb.ReadFeature()
 
 		if err == io.EOF {
 			break

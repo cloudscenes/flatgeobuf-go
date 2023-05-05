@@ -15,22 +15,16 @@ func TestPropertyDecoder_Decode(t *testing.T) {
 	}
 	fgb, err := NewFGB(f)
 
-	header := fgb.Header()
-	columns := NewColumns(header)
-
-	features := fgb.Features()
-	feature, _ := features.Read()
+	feature, _ := fgb.ReadFeature()
 	props := feature.Properties()
 
 	tests := []struct {
 		name  string
-		cols  *Columns
 		props map[string]interface{}
 		want  map[string]interface{}
 	}{
 		{
 			name:  "alldatatypes",
-			cols:  columns,
 			props: props,
 			want: map[string]interface{}{
 				"binary":   []uint8{0x58},
