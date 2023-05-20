@@ -33,6 +33,9 @@ func (f *Feature) decode() map[string]interface{} {
 	return res
 }
 
+// constant that represents size of variable length data (string, json, dateTime, binary)
+const varDataSize = flatbuffers.SizeUint32
+
 func (f *Feature) decodeVal(b []byte, col *FlatGeobuf.ColumnT) (interface{}, uint16) {
 	var val interface{}
 	var size uint16
@@ -72,26 +75,26 @@ func (f *Feature) decodeVal(b []byte, col *FlatGeobuf.ColumnT) (interface{}, uin
 		size = flatbuffers.SizeFloat64
 	case FlatGeobuf.ColumnTypeString:
 		strSize := flatbuffers.GetUint32(b)
-		val = string(b[4 : 4+strSize])
-		size = 4 + uint16(strSize)
+		val = string(b[varDataSize : varDataSize+strSize])
+		size = varDataSize + uint16(strSize)
 	case FlatGeobuf.ColumnTypeJson:
 		jsonSize := flatbuffers.GetUint32(b)
-		val = string(b[4 : 4+jsonSize])
-		size = 4 + uint16(jsonSize)
+		val = string(b[varDataSize : varDataSize+jsonSize])
+		size = varDataSize + uint16(jsonSize)
 	case FlatGeobuf.ColumnTypeDateTime:
 		datetimeSize := flatbuffers.GetUint32(b)
-		t, err := time.Parse(time.RFC3339, string(b[4:4+datetimeSize]))
+		t, err := time.Parse(time.RFC3339, string(b[varDataSize:varDataSize+datetimeSize]))
 		if err != nil {
 			// TODO: should we panic here?
 			fmt.Println(err)
 		} else {
 			val = t
 		}
-		size = 4 + uint16(datetimeSize)
+		size = varDataSize + uint16(datetimeSize)
 	case FlatGeobuf.ColumnTypeBinary:
 		strSize := flatbuffers.GetUint32(b)
-		val = b[4 : 4+strSize]
-		size = 4 + uint16(strSize)
+		val = b[varDataSize : varDataSize+strSize]
+		size = varDataSize + uint16(strSize)
 	}
 	return val, size
 }
