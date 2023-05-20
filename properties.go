@@ -73,14 +73,10 @@ func (f *Feature) decodeVal(b []byte, col *FlatGeobuf.ColumnT) (interface{}, uin
 	case FlatGeobuf.ColumnTypeDouble:
 		val = flatbuffers.GetFloat64(b)
 		size = flatbuffers.SizeFloat64
-	case FlatGeobuf.ColumnTypeString:
+	case FlatGeobuf.ColumnTypeString, FlatGeobuf.ColumnTypeJson:
 		strSize := flatbuffers.GetUint32(b)
 		val = string(b[varDataSize : varDataSize+strSize])
 		size = varDataSize + uint16(strSize)
-	case FlatGeobuf.ColumnTypeJson:
-		jsonSize := flatbuffers.GetUint32(b)
-		val = string(b[varDataSize : varDataSize+jsonSize])
-		size = varDataSize + uint16(jsonSize)
 	case FlatGeobuf.ColumnTypeDateTime:
 		datetimeSize := flatbuffers.GetUint32(b)
 		t, err := time.Parse(time.RFC3339, string(b[varDataSize:varDataSize+datetimeSize]))
