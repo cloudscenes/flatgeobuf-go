@@ -3,9 +3,10 @@ package flatgeobuf_go
 import (
 	"encoding/binary"
 	"flatgeobuf-go/FlatGeobuf"
-	"github.com/twpayne/go-geom"
 	"io"
 	"log"
+
+	"github.com/twpayne/go-geom"
 )
 
 func (fgb *FGBReader) featureLen() (uint32, error) {
@@ -45,13 +46,14 @@ func (fgb *FGBReader) ReadFeature() (*Feature, error) {
 }
 
 func (fgb *FGBReader) ReadFeatureAt(pos uint32) *FlatGeobuf.FeatureT {
-	//TODO: this cannot be implemented with a simple reader
+	// TODO: this cannot be implemented with a simple reader
 	return nil
-	//return FlatGeobuf.GetSizePrefixedRootAsFeature(fs.b, flatbuffers.UOffsetT(pos))
+	// return FlatGeobuf.GetSizePrefixedRootAsFeature(fs.b, flatbuffers.UOffsetT(pos))
 }
 
 // TODO: check if header crs is never nil and defaults to 0 -> uknown as header.fbs
-// 		 also check if 0 is an acceptable value for go geom srid
+//
+//	also check if 0 is an acceptable value for go geom srid
 func (fgb *FGBReader) Crs() int {
 	crs := fgb.header.Crs
 

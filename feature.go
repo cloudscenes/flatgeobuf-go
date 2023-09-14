@@ -3,9 +3,10 @@ package flatgeobuf_go
 import (
 	"flatgeobuf-go/FlatGeobuf"
 	"fmt"
-	"github.com/twpayne/go-geom"
 	"reflect"
 	"strings"
+
+	"github.com/twpayne/go-geom"
 )
 
 type Feature struct {

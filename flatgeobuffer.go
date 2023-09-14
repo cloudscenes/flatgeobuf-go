@@ -6,8 +6,9 @@ import (
 	"flatgeobuf-go/FlatGeobuf"
 	"flatgeobuf-go/index"
 	"fmt"
-	"github.com/google/flatbuffers/go"
 	"io"
+
+	"github.com/google/flatbuffers/go"
 )
 
 const supportedVersion uint8 = 3
@@ -26,8 +27,8 @@ func Version(fileMagicBytes []byte) (string, error) {
 		return "", ErrInvalidFile
 	}
 
-	var majorVersion = fileMagicBytes[3]
-	var patchVersion = fileMagicBytes[7]
+	majorVersion := fileMagicBytes[3]
+	patchVersion := fileMagicBytes[7]
 
 	if majorVersion != supportedVersion {
 		return "", ErrUnsupportedVersion

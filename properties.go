@@ -3,8 +3,9 @@ package flatgeobuf_go
 import (
 	"flatgeobuf-go/FlatGeobuf"
 	"fmt"
-	flatbuffers "github.com/google/flatbuffers/go"
 	"time"
+
+	flatbuffers "github.com/google/flatbuffers/go"
 )
 
 func (f *Feature) decode() map[string]interface{} {
