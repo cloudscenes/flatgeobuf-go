@@ -5,7 +5,6 @@ linters:
     - dupl
     - gochecknoinits
     - gocyclo
-    - godox
     - gofumpt
     - gomnd
     - gosec
