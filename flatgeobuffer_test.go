@@ -2,12 +2,13 @@ package flatgeobuf_go
 
 import (
 	"fmt"
-	"github.com/twpayne/go-geom"
 	"io"
 	"log"
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/twpayne/go-geom"
 )
 
 func TestVersion(t *testing.T) {

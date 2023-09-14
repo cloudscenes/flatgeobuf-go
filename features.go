@@ -3,9 +3,10 @@ package flatgeobuf_go
 import (
 	"encoding/binary"
 	"flatgeobuf-go/FlatGeobuf"
-	"github.com/twpayne/go-geom"
 	"io"
 	"log"
+
+	"github.com/twpayne/go-geom"
 )
 
 func (fgb *FGBReader) featureLen() (uint32, error) {

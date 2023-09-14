@@ -2,14 +2,15 @@ package flatgeobuf_go
 
 import (
 	"fmt"
-	"github.com/twpayne/go-geom"
-	"github.com/twpayne/go-geom/encoding/wkt"
 	"io"
 	"log"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/twpayne/go-geom"
+	"github.com/twpayne/go-geom/encoding/wkt"
 )
 
 func readFile(path string) *FGBReader {

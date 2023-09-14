@@ -1,12 +1,13 @@
 package flatgeobuf_go
 
 import (
-	"github.com/twpayne/go-geom"
 	"log"
 	"os"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/twpayne/go-geom"
 )
 
 func TestUnmarshal(t *testing.T) {

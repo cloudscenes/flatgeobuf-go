@@ -6,8 +6,9 @@ import (
 	"flatgeobuf-go/FlatGeobuf"
 	"flatgeobuf-go/index"
 	"fmt"
-	"github.com/google/flatbuffers/go"
 	"io"
+
+	"github.com/google/flatbuffers/go"
 )
 
 const supportedVersion uint8 = 3
