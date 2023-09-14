@@ -50,7 +50,7 @@ func searchFGB(file string, box []float64) ([]geom.T, []geom.T, error) {
 	//features := fgb.Features()
 	searchResult := fgb.Index().Search(box[0], box[1], box[2], box[3])
 	searchGeoms := make([]geom.T, len(searchResult))
-	for i, _ := range searchResult {
+	for i := range searchResult {
 		//feature := features.ReadAt(v.Offset)
 		//g, _ := ParseGeometry(feature.Geometry(nil), header.GeometryType(), ParseLayout(header), header.Crs(nil))
 		searchGeoms[i] = nil // g
